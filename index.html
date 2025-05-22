@@ -1,0 +1,1512 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Garde RobaiAlternée</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .parent1-color {
+            background-color: #4299e1;
+            color: white;
+        }
+        .parent2-color {
+            background-color: #ed64a6;
+            color: white;
+        }
+        .fc-event {
+            cursor: pointer;
+        }
+        .transition-marker {
+            background-color: #f6ad55;
+            border-radius: 50%;
+            width: 12px;
+            height: 12px;
+            display: inline-block;
+        }
+        #map {
+            height: 400px;
+            width: 100%;
+            border-radius: 0.5rem;
+        }
+        .task-item {
+            transition: all 0.3s ease;
+        }
+        .task-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .dark-mode {
+            background-color: #1a202c;
+            color: #e2e8f0;
+        }
+        .dark-mode .bg-white {
+            background-color: #2d3748;
+        }
+        .dark-mode .bg-gray-100 {
+            background-color: #4a5568;
+        }
+        .dark-mode .text-gray-800 {
+            color: #e2e8f0;
+        }
+        .dark-mode .border-gray-200 {
+            border-color: #4a5568;
+        }
+        @media print {
+            .no-print {
+                display: none;
+            }
+            .page-break {
+                page-break-after: always;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <header class="bg-blue-600 text-white shadow-lg no-print">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold flex items-center">
+                <i class="fas fa-child mr-2"></i>
+                <i class="fas fa-exchange-alt mx-1"></i>
+                <i class="fas fa-child mr-2"></i>
+                Garde RobaiAlternée
+            </h1>
+            <div class="flex items-center">
+                <div class="mr-4">
+                    <span id="currentParent" class="font-semibold">Parent 1</span>
+                    <button onclick="toggleParent()" class="ml-2 bg-white text-blue-600 px-2 py-1 rounded-full text-xs">
+                        Changer
+                    </button>
+                </div>
+                <button id="darkModeToggle" class="bg-blue-700 p-2 rounded-full">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </div>
+        <nav class="bg-blue-700">
+            <div class="container mx-auto px-4">
+                <ul class="flex overflow-x-auto whitespace-nowrap py-2" id="mainTabs">
+                    <li>
+                        <button onclick="switchTab('dashboard')" class="text-white px-4 py-2 mx-1 rounded-lg hover:bg-blue-800 tab-button active" data-tab="dashboard">
+                            <i class="fas fa-home mr-2"></i>Tableau de bord
+                        </button>
+                    </li>
+                    <li>
+                        <button onclick="switchTab('calendar')" class="text-white px-4 py-2 mx-1 rounded-lg hover:bg-blue-800 tab-button" data-tab="calendar">
+                            <i class="far fa-calendar-alt mr-2"></i>Calendrier
+                        </button>
+                    </li>
+                    <li>
+                        <button onclick="switchTab('transitions')" class="text-white px-4 py-2 mx-1 rounded-lg hover:bg-blue-800 tab-button" data-tab="transitions">
+                            <i class="fas fa-exchange-alt mr-2"></i>Transitions
+                        </button>
+                    </li>
+                    <li>
+                        <button onclick="switchTab('children')" class="text-white px-4 py-2 mx-1 rounded-lg hover:bg-blue-800 tab-button" data-tab="children">
+                            <i class="fas fa-child mr-2"></i>Enfants
+                        </button>
+                    </li>
+                    <li>
+                        <button onclick="switchTab('tasks')" class="text-white px-4 py-2 mx-1 rounded-lg hover:bg-blue-800 tab-button" data-tab="tasks">
+                            <i class="fas fa-tasks mr-2"></i>Tâches
+                        </button>
+                    </li>
+                    <li>
+                        <button onclick="switchTab('stats')" class="text-white px-4 py-2 mx-1 rounded-lg hover:bg-blue-800 tab-button" data-tab="stats">
+                            <i class="fas fa-chart-pie mr-2"></i>Statistiques
+                        </button>
+                    </li>
+                    <li>
+                        <button onclick="switchTab('settings')" class="text-white px-4 py-2 mx-1 rounded-lg hover:bg-blue-800 tab-button" data-tab="settings">
+                            <i class="fas fa-cog mr-2"></i>Paramètres
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 py-6">
+        <!-- DASHBOARD TAB -->
+        <section id="dashboard" class="tab-content active">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="md:col-span-2">
+                    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+                        <h2 class="text-xl font-bold mb-4 text-blue-600">Prochaine transition</h2>
+                        <div class="bg-orange-100 border-l-4 border-orange-500 p-4 rounded">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <p class="font-bold">Vendredi 16 Juin 2023, 18:00</p>
+                                    <p>Parent 1 → Parent 2</p>
+                                    <p class="text-sm text-gray-600">Lieu: École</p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="bg-orange-500 text-white text-xs px-2 py-1 rounded-full">Dans 2 jours</span>
+                                    <button class="mt-2 bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg text-sm">
+                                        <i class="fas fa-check mr-1"></i> Confirmer
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-bold text-blue-600">Calendrier de garde</h2>
+                            <button class="text-blue-500 hover:underline text-sm">
+                                Voir tout <i class="fas fa-arrow-right ml-1"></i>
+                            </button>
+                        </div>
+                        <div id="miniCalendar" class="h-64"></div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-md p-4">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-bold text-blue-600">Tâches à venir</h2>
+                            <button class="text-blue-500 hover:underline text-sm">
+                                Voir tout <i class="fas fa-arrow-right ml-1"></i>
+                            </button>
+                        </div>
+                        <ul class="space-y-3">
+                            <li class="task-item bg-gray-50 p-3 rounded-lg border-l-4 border-blue-500">
+                                <div class="flex justify-between">
+                                    <div>
+                                        <h3 class="font-semibold">Rendez-vous dentiste pour Emma</h3>
+                                        <p class="text-sm text-gray-600">À programmer avant fin juin</p>
+                                    </div>
+                                    <div class="text-sm">
+                                        <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded">Parent 1</span>
+                                    </div>
+                                </div>
+                            </li>
+                            <li class="task-item bg-gray-50 p-3 rounded-lg border-l-4 border-pink-500">
+                                <div class="flex justify-between">
+                                    <div>
+                                        <h3 class="font-semibold">Acheter chaussures de sport pour Lucas</h3>
+                                        <p class="text-sm text-gray-600">Taille 35</p>
+                                    </div>
+                                    <div class="text-sm">
+                                        <span class="bg-pink-100 text-pink-800 px-2 py-1 rounded">Parent 2</span>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="md:col-span-1">
+                    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+                        <h2 class="text-xl font-bold mb-4 text-blue-600">Profils enfants</h2>
+                        <div class="space-y-4">
+                            <div class="bg-gray-50 p-3 rounded-lg">
+                                <h3 class="font-semibold">Emma Dupont</h3>
+                                <p class="text-sm text-gray-600">8 ans (12/06/2015)</p>
+                                <div class="mt-2">
+                                    <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">Allergie arachides</span>
+                                    <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">Asthme léger</span>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 p-3 rounded-lg">
+                                <h3 class="font-semibold">Lucas Dupont</h3>
+                                <p class="text-sm text-gray-600">6 ans (24/03/2017)</p>
+                                <div class="mt-2">
+                                    <span class="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full">Lunettes</span>
+                                </div>
+                            </div>
+                            <button class="w-full mt-2 border border-dashed border-gray-300 text-gray-500 rounded-lg p-2 hover:bg-gray-50">
+                                <i class="fas fa-plus mr-1"></i> Ajouter un enfant
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-md p-4">
+                        <h2 class="text-xl font-bold mb-4 text-blue-600">Répartition du temps</h2>
+                        <canvas id="custodyChart" width="400" height="200"></canvas>
+                        <div class="grid grid-cols-2 mt-4 gap-4">
+                            <div class="text-center">
+                                <div class="text-xl font-bold parent1-color p-2 rounded">48%</div>
+                                <p class="text-sm mt-1">Parent 1</p>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-xl font-bold parent2-color p-2 rounded">52%</div>
+                                <p class="text-sm mt-1">Parent 2</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CALENDAR TAB -->
+        <section id="calendar" class="tab-content">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div class="md:col-span-3">
+                    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+                        <h2 class="text-xl font-bold mb-4 text-blue-600">Calendrier de garde</h2>
+                        <div id="fullCalendar" class="h-96"></div>
+                    </div>
+                </div>
+                <div class="md:col-span-1">
+                    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+                        <h2 class="text-xl font-bold mb-4 text-blue-600">Configuration du planning</h2>
+                        <form>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-bold mb-2" for="custodyModel">
+                                    Modèle de garde
+                                </label>
+                                <select id="custodyModel" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                                    <option value="week-alt">Semaine paire/impaire</option>
+                                    <option value="1-1">1/1 semaine</option>
+                                    <option value="2-2">2/2 semaines</option>
+                                    <option value="5-5-2-2">5/5/2/2 jours</option>
+                                    <option value="custom">Personnalisé</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-bold mb-2">
+                                    Date de début du cycle
+                                </label>
+                                <input type="date" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" value="2023-01-01">
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-bold mb-2">
+                                    Couleurs
+                                </label>
+                                <div class="flex space-x-2">
+                                    <div>
+                                        <span class="block text-xs mb-1">Parent 1</span>
+                                        <input type="color" value="#4299e1" class="w-full h-8 rounded">
+                                    </div>
+                                    <div>
+                                        <span class="block text-xs mb-1">Parent 2</span>
+                                        <input type="color" value="#ed64a6" class="w-full h-8 rounded">
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full">
+                                Appliquer les modifications
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-md p-4">
+                        <h2 class="text-lg font-bold mb-3 text-blue-600">Ajouter une exception</h2>
+                        <form>
+                            <div class="mb-3">
+                                <label class="block text-gray-700 text-sm font-bold mb-2">
+                                    Date
+                                </label>
+                                <input type="date" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-gray-700 text-sm font-bold mb-2">
+                                    Parent
+                                </label>
+                                <div class="flex space-x-2">
+                                    <button type="button" class="w-1/2 parent1-color py-2 px-3 rounded">Parent 1</button>
+                                    <button type="button" class="w-1/2 bg-gray-200 py-2 px-3 rounded">Parent 2</button>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-gray-700 text-sm font-bold mb-2">
+                                    Raison
+                                </label>
+                                <input type="text" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Ex: Voyage scolaire">
+                            </div>
+                            <button type="button" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full">
+                                Ajouter l'exception
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TRANSITIONS TAB -->
+        <section id="transitions" class="tab-content">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+                        <h2 class="text-xl font-bold mb-4 text-blue-600">Prochaines transitions</h2>
+                        <ul class="space-y-4">
+                            <li class="bg-orange-50 p-4 rounded-lg border-l-4 border-orange-500">
+                                <div class="flex justify-between">
+                                    <div>
+                                        <h3 class="font-semibold">Vendredi 16 Juin 2023, 18:00</h3>
+                                        <p class="text-sm">Parent 1 → Parent 2</p>
+                                        <p class="text-sm text-gray-600">Lieu: École</p>
+                                    </div>
+                                    <div>
+                                        <span class="bg-orange-500 text-white text-xs px-2 py-1 rounded-full">Dans 2 jours</span>
+                                        <div class="mt-2">
+                                            <button class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-sm">
+                                                <i class="fas fa-check mr-1"></i> Confirmer
+                                            </button>
+                                            <button class="bg-gray-500 hover:bg-gray-600 text-white px-2 py-1 rounded text-sm">
+                                                <i class="fas fa-pen mr-1"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                            <li class="bg-gray-50 p-4 rounded-lg border-l-4 border-gray-300">
+                                <div class="flex justify-between">
+                                    <div>
+                                        <h3 class="font-semibold">Vendredi 23 Juin 2023, 18:00</h3>
+                                        <p class="text-sm">Parent 2 → Parent 1</p>
+                                        <p class="text-sm text-gray-600">Lieu: Domicile Parent 2</p>
+                                    </div>
+                                    <div>
+                                        <span class="bg-gray-500 text-white text-xs px-2 py-1 rounded-full">Dans 9 jours</span>
+                                    </div>
+                                </div>
+                            </li>
+                            <li class="bg-gray-50 p-4 rounded-lg border-l-4 border-gray-300">
+                                <div class="flex justify-between">
+                                    <div>
+                                        <h3 class="font-semibold">Vendredi 30 Juin 2023, 18:00</h3>
+                                        <p class="text-sm">Parent 1 → Parent 2</p>
+                                        <p class="text-sm text-gray-600">Lieu: Domicile Parent 1</p>
+                                    </div>
+                                    <div>
+                                        <span class="bg-gray-500 text-white text-xs px-2 py-1 rounded-full">Dans 16 jours</span>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                        <button class="mt-4 bg-blue-500 hover:bg-blue-600 text-white w-full py-2 rounded-lg">
+                            <i class="fas fa-plus mr-1"></i> Ajouter une transition
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-md p-4">
+                        <h2 class="text-xl font-bold mb-4 text-blue-600">Historique des transitions</h2>
+                        <ul class="space-y-3 max-h-80 overflow-y-auto">
+                            <li class="bg-gray-50 p-3 rounded-lg">
+                                <div class="flex justify-between">
+                                    <div>
+                                        <h3 class="font-semibold">Vendredi 9 Juin 2023, 18:00</h3>
+                                        <p class="text-sm">Parent 2 → Parent 1</p>
+                                        <p class="text-sm text-gray-600">Lieu: École</p>
+                                    </div>
+                                    <div>
+                                        <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Effectuée</span>
+                                    </div>
+                                </div>
+                            </li>
+                            <li class="bg-gray-50 p-3 rounded-lg">
+                                <div class="flex justify-between">
+                                    <div>
+                                        <h3 class="font-semibold">Vendredi 2 Juin 2023, 18:00</h3>
+                                        <p class="text-sm">Parent 1 → Parent 2</p>
+                                        <p class="text-sm text-gray-600">Lieu: Domicile Parent 1</p>
+                                    </div>
+                                    <div>
+                                        <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Effectuée</span>
+                                    </div>
+                                </div>
+                            </li>
+                            <li class="bg-gray-50 p-3 rounded-lg">
+                                <div class="flex justify-between">
+                                    <div>
+                                        <h3 class="font-semibold">Vendredi 26 Mai 2023, 18:00</h3>
+                                        <p class="text-sm">Parent 2 → Parent 1</p>
+                                        <p class="text-sm text-gray-600">Lieu: Domicile Parent 2</p>
+                                    </div>
+                                    <div>
+                                        <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Effectuée</span>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+                        <h2 class="text-xl font-bold mb-4 text-blue-600">Carte des lieux de transition</h2>
+                        <div id="map" class="mb-4"></div>
+                        <h3 class="font-semibold mb-2">Lieux enregistrés</h3>
+                        <ul class="space-y-2">
+                            <li class="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
+                                <div class="flex items-center">
+                                    <span class="transition-marker mr-2"></span>
+                                    <span>Domicile Parent 1</span>
+                                </div>
+                                <div>
+                                    <button class="text-blue-500 hover:text-blue-700">
+                                        <i class="fas fa-pen"></i>
+                                    </button>
+                                    <button class="text-red-500 hover:text-red-700 ml-2">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </li>
+                            <li class="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
+                                <div class="flex items-center">
+                                    <span class="transition-marker mr-2"></span>
+                                    <span>Domicile Parent 2</span>
+                                </div>
+                                <div>
+                                    <button class="text-blue-500 hover:text-blue-700">
+                                        <i class="fas fa-pen"></i>
+                                    </button>
+                                    <button class="text-red-500 hover:text-red-700 ml-2">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </li>
+                            <li class="flex justify-between items-center p-2 bg-gray-50 rounded-lg">
+                                <div class="flex items-center">
+                                    <span class="transition-marker mr-2"></span>
+                                    <span>École</span>
+                                </div>
+                                <div>
+                                    <button class="text-blue-500 hover:text-blue-700">
+                                        <i class="fas fa-pen"></i>
+                                    </button>
+                                    <button class="text-red-500 hover:text-red-700 ml-2">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </li>
+                        </ul>
+                        <button class="mt-4 bg-green-500 hover:bg-green-600 text-white w-full py-2 rounded-lg">
+                            <i class="fas fa-plus mr-1"></i> Ajouter un lieu
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-md p-4">
+                        <h2 class="text-xl font-bold mb-4 text-blue-600">Paramètres des transitions</h2>
+                        <form>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-bold mb-2">
+                                    Heure par défaut
+                                </label>
+                                <input type="time" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" value="18:00">
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-bold mb-2">
+                                    Lieu par défaut
+                                </label>
+                                <select class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                                    <option>École</option>
+                                    <option>Domicile Parent 1</option>
+                                    <option>Domicile Parent 2</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-bold mb-2">
+                                    Notifications
+                                </label>
+                                <div class="space-y-2">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="notifyDay" class="mr-2" checked>
+                                        <label for="notifyDay">La veille de la transition</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="notifyHour" class="mr-2" checked>
+                                        <label for="notifyHour">1 heure avant la transition</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="notifyConfirm" class="mr-2" checked>
+                                        <label for="notifyConfirm">Demander confirmation</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full">
+                                Enregistrer les paramètres
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CHILDREN TAB -->
+        <section id="children" class="tab-content">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="md:col-span-1">
+                    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+                        <h2 class="text-xl font-bold mb-4 text-blue-600">Profils enfants</h2>
+                        <ul class="space-y-2">
+                            <li class="p-3 bg-blue-50 rounded-lg border-l-4 border-blue-500 cursor-pointer" onclick="showChildProfile('emma')">
+                                <h3 class="font-semibold">Emma Dupont</h3>
+                                <p class="text-sm text-gray-600">8 ans</p>
+                            </li>
+                            <li class="p-3 bg-gray-50 rounded-lg border-l-4 border-gray-300 cursor-pointer" onclick="showChildProfile('lucas')">
+                                <h3 class="font-semibold">Lucas Dupont</h3>
+                                <p class="text-sm text-gray-600">6 ans</p>
+                            </li>
+                            <li class="p-3 border border-dashed border-gray-300 rounded-lg text-center cursor-pointer">
+                                <i class="fas fa-plus text-gray-500"></i>
+                                <p class="text-sm text-gray-500">Ajouter un enfant</p>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="md:col-span-2">
+                    <div id="childProfile" class="bg-white rounded-lg shadow-md p-4">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-bold text-blue-600">Emma Dupont</h2>
+                            <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg">
+                                <i class="fas fa-pen mr-1"></i> Modifier
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <h3 class="text-lg font-semibold mb-3 text-blue-600">Informations générales</h3>
+                                <div class="space-y-2">
+                                    <div class="flex">
+                                        <span class="font-semibold w-40">Date de naissance:</span>
+                                        <span>12/06/2015</span>
+                                    </div>
+                                    <div class="flex">
+                                        <span class="font-semibold w-40">Âge:</span>
+                                        <span>8 ans</span>
+                                    </div>
+                                    <div class="flex">
+                                        <span class="font-semibold w-40">École:</span>
+                                        <span>École primaire Jean Moulin</span>
+                                    </div>
+                                    <div class="flex">
+                                        <span class="font-semibold w-40">Classe:</span>
+                                        <span>CE2</span>
+                                    </div>
+                                </div>
+
+                                <h3 class="text-lg font-semibold mb-3 mt-6 text-blue-600">Informations médicales</h3>
+                                <ul class="space-y-2">
+                                    <li class="flex items-center">
+                                        <i class="fas fa-exclamation-triangle text-red-500 mr-2"></i>
+                                        <span>Allergie aux arachides</span>
+                                    </li>
+                                    <li class="flex items-center">
+                                        <i class="fas fa-lungs text-yellow-500 mr-2"></i>
+                                        <span>Asthme léger (Ventoline disponible à l'école)</span>
+                                    </li>
+                                </ul>
+                                <div class="mt-3">
+                                    <button class="text-blue-500 hover:text-blue-700 text-sm">
+                                        <i class="fas fa-plus mr-1"></i> Ajouter une information médicale
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h3 class="text-lg font-semibold mb-3 text-blue-600">Activités</h3>
+                                <ul class="space-y-3">
+                                    <li class="bg-indigo-50 p-3 rounded-lg">
+                                        <div class="flex justify-between">
+                                            <div>
+                                                <h4 class="font-semibold">Danse</h4>
+                                                <p class="text-sm text-gray-600">Mercredi 14h-16h</p>
+                                                <p class="text-sm text-gray-600">Centre culturel municipal</p>
+                                            </div>
+                                            <div>
+                                                <button class="text-blue-500 hover:text-blue-700">
+                                                    <i class="fas fa-pen"></i>
+                                                </button>
+                                                <button class="text-red-500 hover:text-red-700 ml-2">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </li>
+                                    <li class="bg-indigo-50 p-3 rounded-lg">
+                                        <div class="flex justify-between">
+                                            <div>
+                                                <h4 class="font-semibold">Natation</h4>
+                                                <p class="text-sm text-gray-600">Samedi 10h-11h</p>
+                                                <p class="text-sm text-gray-600">Piscine municipale</p>
+                                            </div>
+                                            <div>
+                                                <button class="text-blue-500 hover:text-blue-700">
+                                                    <i class="fas fa-pen"></i>
+                                                </button>
+                                                <button class="text-red-500 hover:text-red-700 ml-2">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </li>
+                                </ul>
+                                <div class="mt-3">
+                                    <button class="text-blue-500 hover:text-blue-700 text-sm">
+                                        <i class="fas fa-plus mr-1"></i> Ajouter une activité
+                                    </button>
+                                </div>
+
+                                <h3 class="text-lg font-semibold mb-3 mt-6 text-blue-600">Notes</h3>
+                                <div class="bg-yellow-50 p-3 rounded-lg">
+                                    <p class="text-sm">Emma a besoin de son doudou pour dormir. Elle préfère lire avant de se coucher.</p>
+                                </div>
+                                <div class="mt-3">
+                                    <button class="text-blue-500 hover:text-blue-700 text-sm">
+                                        <i class="fas fa-pen mr-1"></i> Modifier les notes
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TASKS TAB -->
+        <section id="tasks" class="tab-content">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="md:col-span-2">
+                    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-bold text-blue-600">Liste des tâches partagées</h2>
+                            <div>
+                                <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg">
+                                    <i class="fas fa-plus mr-1"></i> Nouvelle tâche
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="flex space-x-2 mb-4">
+                                <button class="bg-blue-100 text-blue-800 px-3 py-1 rounded-lg text-sm">Toutes</button>
+                                <button class="bg-gray-100 text-gray-800 px-3 py-1 rounded-lg text-sm">En attente</button>
+                                <button class="bg-gray-100 text-gray-800 px-3 py-1 rounded-lg text-sm">Terminées</button>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="bg-red-100 text-red-800 px-3 py-1 rounded-lg text-sm">Médical</button>
+                                <button class="bg-green-100 text-green-800 px-3 py-1 rounded-lg text-sm">Achats</button>
+                                <button class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-lg text-sm">École</button>
+                                <button class="bg-purple-100 text-purple-800 px-3 py-1 rounded-lg text-sm">Activités</button>
+                            </div>
+                        </div>
+
+                        <ul class="space-y-3">
+                            <li class="task-item bg-gray-50 p-3 rounded-lg border-l-4 border-red-500">
+                                <div class="flex justify-between">
+                                    <div>
+                                        <h3 class="font-semibold">Rendez-vous dentiste pour Emma</h3>
+                                        <p class="text-sm text-gray-600">À programmer avant fin juin</p>
+                                        <div class="mt-1">
+                                            <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">Médical</span>
+                                            <span class="text-xs text-gray-500 ml-2">Créée le 30/05/2023</span>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">Parent 1</span>
+                                        <div class="mt-2">
+                                            <button class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-sm">
+                                                <i class="fas fa-check mr-1"></i> Terminer
+                                            </button>
+                                            <button class="bg-gray-500 hover:bg-gray-600 text-white px-2 py-1 rounded text-sm">
+                                                <i class="fas fa-pen mr-1"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                            <li class="task-item bg-gray-50 p-3 rounded-lg border-l-4 border-green-500">
+                                <div class="flex justify-between">
+                                    <div>
+                                        <h3 class="font-semibold">Acheter chaussures de sport pour Lucas</h3>
+                                        <p class="text-sm text-gray-600">Taille 35</p>
+                                        <div class="mt-1">
+                                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Achats</span>
+                                            <span class="text-xs text-gray-500 ml-2">Créée le 28/05/2023</span>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="bg-pink-100 text-pink-800 px-2 py-1 rounded text-sm">Parent 2</span>
+                                        <div class="mt-2">
+                                            <button class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-sm">
+                                                <i class="fas fa-check mr-1"></i> Terminer
+                                            </button>
+                                            <button class="bg-gray-500 hover:bg-gray-600 text-white px-2 py-1 rounded text-sm">
+                                                <i class="fas fa-pen mr-1"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                            <li class="task-item bg-gray-50 p-3 rounded-lg border-l-4 border-yellow-500">
+                                <div class="flex justify-between">
+                                    <div>
+                                        <h3 class="font-semibold">Signer le carnet de correspondance d'Emma</h3>
+                                        <p class="text-sm text-gray-600">Notes du 2ème trimestre</p>
+                                        <div class="mt-1">
+                                            <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">École</span>
+                                            <span class="text-xs text-gray-500 ml-2">Créée le 25/05/2023</span>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">Parent 1</span>
+                                        <div class="mt-2">
+                                            <button class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-sm">
+                                                <i class="fas fa-check mr-1"></i> Terminer
+                                            </button>
+                                            <button class="bg-gray-500 hover:bg-gray-600 text-white px-2 py-1 rounded text-sm">
+                                                <i class="fas fa-pen mr-1"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="md:col-span-1">
+                    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+                        <h2 class="text-xl font-bold mb-4 text-blue-600">Gérer les catégories</h2>
+                        <ul class="space-y-2">
+                            <li class="flex justify-between items-center p-2 bg-red-50 rounded-lg">
+                                <div class="flex items-center">
+                                    <span class="w-3 h-3 bg-red-500 rounded-full mr-2"></span>
+                                    <span>Médical</span>
+                                </div>
+                                <div>
+                                    <button class="text-blue-500 hover:text-blue-700">
+                                        <i class="fas fa-pen"></i>
+                                    </button>
+                                </div>
+                            </li>
+                            <li class="flex justify-between items-center p-2 bg-green-50 rounded-lg">
+                                <div class="flex items-center">
+                                    <span class="w-3 h-3 bg-green-500 rounded-full mr-2"></span>
+                                    <span>Achats</span>
+                                </div>
+                                <div>
+                                    <button class="text-blue-500 hover:text-blue-700">
+                                        <i class="fas fa-pen"></i>
+                                    </button>
+                                </div>
+                            </li>
+                            <li class="flex justify-between items-center p-2 bg-yellow-50 rounded-lg">
+                                <div class="flex items-center">
+                                    <span class="w-3 h-3 bg-yellow-500 rounded-full mr-2"></span>
+                                    <span>École</span>
+                                </div>
+                                <div>
+                                    <button class="text-blue-500 hover:text-blue-700">
+                                        <i class="fas fa-pen"></i>
+                                    </button>
+                                </div>
+                            </li>
+                            <li class="flex justify-between items-center p-2 bg-purple-50 rounded-lg">
+                                <div class="flex items-center">
+                                    <span class="w-3 h-3 bg-purple-500 rounded-full mr-2"></span>
+                                    <span>Activités</span>
+                                </div>
+                                <div>
+                                    <button class="text-blue-500 hover:text-blue-700">
+                                        <i class="fas fa-pen"></i>
+                                    </button>
+                                </div>
+                            </li>
+                        </ul>
+                        <button class="mt-4 bg-blue-500 hover:bg-blue-600 text-white w-full py-2 rounded-lg">
+                            <i class="fas fa-plus mr-1"></i> Ajouter une catégorie
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-md p-4">
+                        <h2 class="text-xl font-bold mb-4 text-blue-600">Statistiques des tâches</h2>
+                        <div class="space-y-4">
+                            <div>
+                                <h3 class="font-semibold text-gray-700 mb-2">Tâches en attente: 5</h3>
+                                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                    <div class="bg-blue-600 h-2.5 rounded-full" style="width: 29%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-700 mb-2">Tâches terminées: 12</h3>
+                                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                    <div class="bg-green-600 h-2.5 rounded-full" style="width: 71%"></div>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 p-3 rounded-lg">
+                                <h3 class="font-semibold text-gray-700 mb-3">Répartition par parent</h3>
+                                <canvas id="taskDistributionChart" width="400" height="200"></canvas>
+                                <div class="grid grid-cols-2 mt-3 gap-2">
+                                    <div class="text-center">
+                                        <div class="font-semibold">Parent 1</div>
+                                        <div class="text-sm">8 tâches</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="font-semibold">Parent 2</div>
+                                        <div class="text-sm">9 tâches</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- STATS TAB -->
+        <section id="stats" class="tab-content">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="md:col-span-3">
+                    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+                        <h2 class="text-xl font-bold mb-4 text-blue-600">Statistiques de garde</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="md:col-span-1 space-y-4">
+                                <div class="bg-gray-50 p-4 rounded-lg">
+                                    <h3 class="font-semibold text-gray-700 mb-2">Répartition du temps de garde</h3>
+                                    <canvas id="custodyPieChart" width="300" height="300"></canvas>
+                                    <div class="grid grid-cols-2 mt-4 gap-4">
+                                        <div class="text-center">
+                                            <div class="text-xl font-bold parent1-color p-2 rounded">48%</div>
+                                            <p class="text-sm mt-1">Parent 1</p>
+                                            <p class="text-xs text-gray-500">Moyenne sur 6 mois</p>
+                                        </div>
+                                        <div class="text-center">
+                                            <div class="text-xl font-bold parent2-color p-2 rounded">52%</div>
+                                            <p class="text-sm mt-1">Parent 2</p>
+                                            <p class="text-xs text-gray-500">Moyenne sur 6 mois</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="md:col-span-2 space-y-4">
+                                <div class="bg-gray-50 p-4 rounded-lg">
+                                    <h3 class="font-semibold text-gray-700 mb-2">Évolution mensuelle</h3>
+                                    <canvas id="custodyMonthlyChart" width="600" height="300"></canvas>
+                                </div>
+                                <div class="bg-gray-50 p-4 rounded-lg">
+                                    <h3 class="font-semibold text-gray-700 mb-2">Analyse des données</h3>
+                                    <ul class="space-y-1 list-disc pl-5">
+                                        <li>Garde équilibrée sur les 6 derniers mois</li>
+                                        <li>Écart maximal observé en avril (60% / 40%)</li>
+                                        <li>Moyenne de transitions par mois: 8.5</li>
+                                        <li>Nombre total de jours: Parent 1 (87), Parent 2 (95)</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="md:col-span-3">
+                    <div class="bg-white rounded-lg shadow-md p-4">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-bold text-blue-600">Filtres et paramètres</h2>
+                            <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg">
+                                <i class="fas fa-download mr-1"></i> Exporter les données
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div>
+                                <h3 class="font-semibold mb-2">Période</h3>
+                                <div class="space-y-2">
+                                    <div>
+                                        <label class="block text-sm mb-1">Du</label>
+                                        <input type="date" class="w-full border rounded-lg p-2" value="2023-01-01">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm mb-1">Au</label>
+                                        <input type="date" class="w-full border rounded-lg p-2" value="2023-06-30">
+                                    </div>
+                                    <div class="pt-2">
+                                        <select class="w-full border rounded-lg p-2">
+                                            <option>Les 6 derniers mois</option>
+                                            <option>Les 3 derniers mois</option>
+                                            <option>Le dernier mois</option>
+                                            <option>L'année en cours</option>
+                                            <option>Personnalisé</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold mb-2">Enfant</h3>
+                                <div class="space-y-2">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="all-children" class="mr-2" checked>
+                                        <label for="all-children">Tous les enfants</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="emma-filter" class="mr-2">
+                                        <label for="emma-filter">Emma</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="lucas-filter" class="mr-2">
+                                        <label for="lucas-filter">Lucas</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold mb-2">Type de données</h3>
+                                <div class="space-y-2">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="custody-data" class="mr-2" checked>
+                                        <label for="custody-data">Temps de garde</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="transition-data" class="mr-2" checked>
+                                        <label for="transition-data">Transitions</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="task-data" class="mr-2">
+                                        <label for="task-data">Tâches</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg">
+                                Appliquer les filtres
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SETTINGS TAB -->
+        <section id="settings" class="tab-content">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="md:col-span-1">
+                    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+                        <h2 class="text-xl font-bold mb-4 text-blue-600">Paramètres du compte</h2>
+                        <form>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-bold mb-2">
+                                    Nom d'utilisateur
+                                </label>
+                                <input type="text" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" value="Parent1">
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-bold mb-2">
+                                    Adresse e-mail
+                                </label>
+                                <input type="email" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" value="parent1@example.com">
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-gray-700 text-sm font-bold mb-2">
+                                    Mot de passe
+                                </label>
+                                <input type="password" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" value="••••••••">
+                            </div>
+                            <button type="button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full">
+                                Enregistrer les modifications
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-md p-4">
+                        <h2 class="text-xl font-bold mb-4 text-blue-600">Préférences d'affichage</h2>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-gray-700 text-sm font-bold mb-2">
+                                    Thème
+                                </label>
+                                <div class="flex space-x-2">
+                                    <button type="button" class="bg-white border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <i class="fas fa-sun mr-1"></i> Clair
+                                    </button>
+                                    <button type="button" class="bg-gray-800 text-white border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                        <i class="fas fa-moon mr-1"></i> Sombre
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 text-sm font-bold mb-2">
+                                    Vue du calendrier par défaut
+                                </label>
+                                <select class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                                    <option>Mois</option>
+                                    <option>Semaine</option>
+                                    <option>Jour</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 text-sm font-bold mb-2">
+                                    Notifications
+                                </label>
+                                <div class="space-y-2">
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="emailNotif" class="mr-2" checked>
+                                        <label for="emailNotif">Notifications par e-mail</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="browserNotif" class="mr-2" checked>
+                                        <label for="browserNotif">Notifications navigateur</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="md:col-span-2">
+                    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+                        <h2 class="text-xl font-bold mb-4 text-blue-600">Données et sauvegarde</h2>
+                        <p class="mb-4 text-gray-600">
+                            Les données sont sauvegardées localement sur votre appareil. Pensez à les exporter régulièrement pour éviter toute perte.
+                        </p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <button class="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg">
+                                <i class="fas fa-download mr-1"></i> Exporter les données
+                            </button>
+                            <button class="bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg">
+                                <i class="fas fa-upload mr-1"></i> Importer des données
+                            </button>
+                        </div>
+                        <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4">
+                            <p class="text-sm text-yellow-700">
+                                <i class="fas fa-exclamation-triangle mr-1"></i> L'importation de données remplacera toutes les données existantes. Assurez-vous de faire une sauvegarde avant d'importer.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-md p-4">
+                        <h2 class="text-xl font-bold mb-4 text-blue-600">Historique des modifications</h2>
+                        <ul class="space-y-3 max-h-80 overflow-y-auto">
+                            <li class="bg-gray-50 p-3 rounded-lg">
+                                <div class="flex justify-between">
+                                    <div>
+                                        <h3 class="font-semibold">12/06/2023 14:32</h3>
+                                        <p class="text-sm text-gray-600">Modification du planning</p>
+                                    </div>
+                                    <div>
+                                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">Parent 1</span>
+                                    </div>
+                                </div>
+                            </li>
+                            <li class="bg-gray-50 p-3 rounded-lg">
+                                <div class="flex justify-between">
+                                    <div>
+                                        <h3 class="font-semibold">10/06/2023 09:15</h3>
+                                        <p class="text-sm text-gray-600">Ajout d'une tâche: "Acheter fournitures scolaires"</p>
+                                    </div>
+                                    <div>
+                                        <span class="bg-pink-100 text-pink-800 text-xs px-2 py-1 rounded-full">Parent 2</span>
+                                    </div>
+                                </div>
+                            </li>
+                            <li class="bg-gray-50 p-3 rounded-lg">
+                                <div class="flex justify-between">
+                                    <div>
+                                        <h3 class="font-semibold">05/06/2023 18:22</h3>
+                                        <p class="text-sm text-gray-600">Mise à jour du profil de Lucas</p>
+                                    </div>
+                                    <div>
+                                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">Parent 1</span>
+                                    </div>
+                                </div>
+                            </li>
+                            <li class="bg-gray-50 p-3 rounded-lg">
+                                <div class="flex justify-between">
+                                    <div>
+                                        <h3 class="font-semibold">01/06/2023 10:05</h3>
+                                        <p class="text-sm text-gray-600">Ajout d'un lieu de transition: "Maison grand-parents"</p>
+                                    </div>
+                                    <div>
+                                        <span class="bg-pink-100 text-pink-800 text-xs px-2 py-1 rounded-full">Parent 2</span>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                        <button class="mt-4 bg-gray-500 hover:bg-gray-600 text-white w-full py-2 rounded-lg">
+                            <i class="fas fa-trash mr-1"></i> Effacer l'historique
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-gray-800 text-white py-4 mt-8 no-print">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-4 md:mb-0">
+                    <h3 class="text-lg font-semibold">Garde RobaiAlternée</h3>
+                    <p class="text-sm text-gray-400">Application de gestion de garde alternée</p>
+                </div>
+                <div class="text-sm text-gray-400">
+                    <p>Données sauvegardées localement sur votre appareil</p>
+                    <p>Dernière mise à jour: 12/06/2023</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Global variables
+        let currentParent = 'Parent 1';
+        let isDarkMode = false;
+
+        // Initialize the application when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+
+        function initializeApp() {
+            initializeCalendars();
+            initializeCharts();
+            initializeMap();
+            setupEventListeners();
+            loadSavedData();
+        }
+
+        // Tab switching function
+        function switchTab(tabId) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all tab buttons
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active', 'bg-blue-800');
+            });
+            
+            // Show the selected tab content
+            document.getElementById(tabId).classList.add('active');
+            
+            // Add active class to the clicked tab button
+            document.querySelector(`.tab-button[data-tab="${tabId}"]`).classList.add('active', 'bg-blue-800');
+        }
+
+        // Toggle between Parent 1 and Parent 2
+        function toggleParent() {
+            currentParent = currentParent === 'Parent 1' ? 'Parent 2' : 'Parent 1';
+            document.getElementById('currentParent').textContent = currentParent;
+            
+            // Update UI elements based on the current parent
+            updateUIForCurrentParent();
+        }
+
+        function updateUIForCurrentParent() {
+            // Update any UI elements that should change based on the current parent
+            // This is a placeholder for your implementation
+        }
+
+        // Toggle dark mode
+        function toggleDarkMode() {
+            isDarkMode = !isDarkMode;
+            document.body.classList.toggle('dark-mode', isDarkMode);
+            
+            const icon = document.querySelector('#darkModeToggle i');
+            if (isDarkMode) {
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+            } else {
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+            }
+        }
+
+        // Show child profile
+        function showChildProfile(childId) {
+            // Update the UI to show the selected child's profile
+            // This is a placeholder for your implementation
+            
+            // Update the active state of the child list items
+            document.querySelectorAll('#children .md\\:col-span-1 li').forEach(li => {
+                li.classList.remove('bg-blue-50', 'border-blue-500');
+                li.classList.add('bg-gray-50', 'border-gray-300');
+            });
+            
+            // Highlight the selected child
+            const selectedChild = document.querySelector(`#children .md\\:col-span-1 li[onclick="showChildProfile('${childId}')"]`);
+            if (selectedChild) {
+                selectedChild.classList.remove('bg-gray-50', 'border-gray-300');
+                selectedChild.classList.add('bg-blue-50', 'border-blue-500');
+            }
+        }
+
+        // Initialize FullCalendar instances
+        function initializeCalendars() {
+            // Mini calendar on dashboard
+            const miniCalendarEl = document.getElementById('miniCalendar');
+            if (miniCalendarEl) {
+                const miniCalendar = new FullCalendar.Calendar(miniCalendarEl, {
+                    initialView: 'dayGridMonth',
+                    headerToolbar: {
+                        left: 'prev,next',
+                        center: 'title',
+                        right: ''
+                    },
+                    height: 'auto',
+                    events: generateSampleEvents(),
+                    eventColor: '#4299e1'
+                });
+                miniCalendar.render();
+            }
+            
+            // Full calendar on Calendar tab
+            const fullCalendarEl = document.getElementById('fullCalendar');
+            if (fullCalendarEl) {
+                const fullCalendar = new FullCalendar.Calendar(fullCalendarEl, {
+                    initialView: 'dayGridMonth',
+                    headerToolbar: {
+                        left: 'prev,next today',
+                        center: 'title',
+                        right: 'dayGridMonth,timeGridWeek'
+                    },
+                    height: 'auto',
+                    events: generateSampleEvents(),
+                    eventClick: function(info) {
+                        alert('Event: ' + info.event.title);
+                    }
+                });
+                fullCalendar.render();
+            }
+        }
+
+        // Generate sample events for the calendar
+        function generateSampleEvents() {
+            const events = [
+                {
+                    title: 'Parent 1',
+                    start: '2023-06-01',
+                    end: '2023-06-08',
+                    color: '#4299e1'
+                },
+                {
+                    title: 'Parent 2',
+                    start: '2023-06-08',
+                    end: '2023-06-15',
+                    color: '#ed64a6'
+                },
+                {
+                    title: 'Parent 1',
+                    start: '2023-06-15',
+                    end: '2023-06-22',
+                    color: '#4299e1'
+                },
+                {
+                    title: 'Parent 2',
+                    start: '2023-06-22',
+                    end: '2023-06-29',
+                    color: '#ed64a6'
+                },
+                {
+                    title: 'Transition',
+                    start: '2023-06-08',
+                    allDay: false,
+                    color: '#f6ad55'
+                },
+                {
+                    title: 'Transition',
+                    start: '2023-06-15',
+                    allDay: false,
+                    color: '#f6ad55'
+                },
+                {
+                    title: 'Transition',
+                    start: '2023-06-22',
+                    allDay: false,
+                    color: '#f6ad55'
+                }
+            ];
+            return events;
+        }
+
+        // Initialize Chart.js charts
+        function initializeCharts() {
+            // Custody distribution chart on dashboard
+            const custodyChartEl = document.getElementById('custodyChart');
+            if (custodyChartEl) {
+                new Chart(custodyChartEl, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Parent 1', 'Parent 2'],
+                        datasets: [{
+                            data: [48, 52],
+                            backgroundColor: ['#4299e1', '#ed64a6'],
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Task distribution chart
+            const taskDistributionChartEl = document.getElementById('taskDistributionChart');
+            if (taskDistributionChartEl) {
+                new Chart(taskDistributionChartEl, {
+                    type: 'pie',
+                    data: {
+                        labels: ['Parent 1', 'Parent 2'],
+                        datasets: [{
+                            data: [8, 9],
+                            backgroundColor: ['#4299e1', '#ed64a6'],
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Custody pie chart on Stats tab
+            const custodyPieChartEl = document.getElementById('custodyPieChart');
+            if (custodyPieChartEl) {
+                new Chart(custodyPieChartEl, {
+                    type: 'pie',
+                    data: {
+                        labels: ['Parent 1', 'Parent 2'],
+                        datasets: [{
+                            data: [48, 52],
+                            backgroundColor: ['#4299e1', '#ed64a6'],
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Monthly custody evolution chart
+            const custodyMonthlyChartEl = document.getElementById('custodyMonthlyChart');
+            if (custodyMonthlyChartEl) {
+                new Chart(custodyMonthlyChartEl, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin'],
+                        datasets: [
+                            {
+                                label: 'Parent 1',
+                                data: [50, 45, 52, 40, 48, 50],
+                                backgroundColor: '#4299e1'
+                            },
+                            {
+                                label: 'Parent 2',
+                                data: [50, 55, 48, 60, 52, 50],
+                                backgroundColor: '#ed64a6'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            }
+                        },
+                        scales: {
+                            x: {
+                                stacked: true,
+                            },
+                            y: {
+                                stacked: true,
+                                min: 0,
+                                max: 100,
+                                ticks: {
+                                    callback: function(value) {
+                                        return value + '%';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Initialize Leaflet map
+        function initializeMap() {
+            const mapEl = document.getElementById('map');
+            if (mapEl) {
+                // Create a map centered on France
+                const map = L.map('map').setView([48.856614, 2.3522219], 11);
+                
+                // Add OpenStreetMap tiles
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(map);
+                
+                // Add sample markers for transition locations
+                const locations = [
+                    { name: 'Domicile Parent 1', lat: 48.870, lng: 2.330 },
+                    { name: 'Domicile Parent 2', lat: 48.845, lng: 2.370 },
+                    { name: 'École', lat: 48.858, lng: 2.350 }
+                ];
+                
+                locations.forEach(location => {
+                    L.marker([location.lat, location.lng])
+                        .addTo(map)
+                        .bindPopup(location.name);
+                });
+            }
+        }
+
+        // Set up event listeners
+        function setupEventListeners() {
+            // Dark mode toggle button
+            const darkModeToggle = document.getElementById('darkModeToggle');
+            if (darkModeToggle) {
+                darkModeToggle.addEventListener('click', toggleDarkMode);
+            }
+            
+            // Add other event listeners as needed
+        }
+
+        // Load saved data from localStorage
+        function loadSavedData() {
+            // This function would load saved data from localStorage
+            // and update the UI accordingly
+            // This is a placeholder for your implementation
+        }
+
+        // Save data to localStorage
+        function saveData(data) {
+            // This function would save data to localStorage
+            // This is a placeholder for your implementation
+        }
+
+        // Export data to file
+        function exportData() {
+            // This function would export the application data to a file
+            // This is a placeholder for your implementation
+        }
+
+        // Import data from file
+        function importData(file) {
+            // This function would import application data from a file
+            // This is a placeholder for your implementation
+        }
+    </script>
+</body>
+</html>
