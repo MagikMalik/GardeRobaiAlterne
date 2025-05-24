@@ -697,11 +697,39 @@
                                     <button type="button" id="loginButton" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded w-full mb-2">
                                         Se connecter
                                     </button>
-                                    <button type="button" id="registerButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full">
+                                    <button type="button" id="showRegisterFormButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full">
                                         S'inscrire (Nouveau compte)
                                     </button>
                                     <p id="authError" class="text-red-500 text-sm mt-2"></p>
                                 </div>
+
+                                <div id="registrationForm" class="hidden">
+                                    <h3 class="text-lg font-semibold mb-2 text-blue-600">Créer un compte familial</h3>
+                                    <div class="mb-4">
+                                        <label for="familyNameInput" class="block text-gray-700 text-sm font-bold mb-2">Nom de famille</label>
+                                        <input type="text" id="familyNameInput" class="${INPUT_CLASSES}" placeholder="Ex: Famille Dupont">
+                                    </div>
+                                    <div class="mb-4">
+                                        <label for="parent1EmailInput" class="block text-gray-700 text-sm font-bold mb-2">Email Parent 1</label>
+                                        <input type="email" id="parent1EmailInput" class="${INPUT_CLASSES}" placeholder="parent1@example.com">
+                                    </div>
+                                    <div class="mb-4">
+                                        <label for="parent1PasswordInput" class="block text-gray-700 text-sm font-bold mb-2">Mot de passe Parent 1</label>
+                                        <input type="password" id="parent1PasswordInput" class="${INPUT_CLASSES}" placeholder="********">
+                                    </div>
+                                    <div class="mb-4">
+                                        <label for="parent2EmailInput" class="block text-gray-700 text-sm font-bold mb-2">Email Parent 2 (Optionnel)</label>
+                                        <input type="email" id="parent2EmailInput" class="${INPUT_CLASSES}" placeholder="parent2@example.com">
+                                    </div>
+                                    <button type="button" id="completeRegistrationButton" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded w-full mb-2">
+                                        Créer le compte familial
+                                    </button>
+                                    <button type="button" id="backToLoginButton" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded w-full">
+                                        Retour à la connexion
+                                    </button>
+                                    <p id="registrationError" class="text-red-500 text-sm mt-2"></p>
+                                </div>
+
                                 <div id="userDetails" class="hidden">
                                     <h3 class="text-lg font-semibold mb-2 text-blue-600">Utilisateur connecté</h3>
                                     <p id="userEmailDisplay" class="text-gray-700 mb-2"></p>
@@ -832,9 +860,8 @@
     <script src="auth.js"></script>
     <script>
         // Global variables
-        // Auth logic (currentUserUID, onAuthStateChanged, registerUser, loginUser, logoutUser, loadFirebaseData)
-        // is now in auth.js.
-        // The settingsData variable and other app-specific globals remain here.
+        // Auth logic is in auth.js.
+        // App-specific globals remain here.
 
         let currentParent = 'Parent 1'; 
         let isDarkMode = false;
@@ -853,17 +880,14 @@
             dataTypes: ['custodyTime', 'transitions'] 
         };
 
-
-        let childrenData = []; // This will now be populated from Firestore via auth.js
+        // Data arrays - These will be primarily populated from Firestore via loadFirebaseData in auth.js
+        let childrenData = []; 
         let scheduleData = []; 
         let transitionsData = []; 
         let tasksData = [];
-        // Add a global error handler
-        window.onerror = function(message, source, lineno, colno, error) {
-            console.error("Global error caught:", message, "at", source, lineno, colno, error);
-            return true; 
-        };
+        let actionHistory = []; // This will also be populated from Firestore
 
+        // Default settings structure - will be merged with Firestore settings on load
         let settingsData = {
             parent1Name: 'Parent 1',
             parent2Name: 'Parent 2',
@@ -888,26 +912,53 @@
             custodyModel: 'week-alt', 
             cycleStartDate: new Date().toISOString().split('T')[0],
             transitionLocations: [],
-            taskCategories: []
+            taskCategories: [ // Default categories if nothing in Firestore/localforage
+                { id: 'cat_default_medical', name: 'Médical', color: '#ef4444' }, 
+                { id: 'cat_default_school', name: 'École', color: '#f59e0b' },  
+                { id: 'cat_default_activities', name: 'Activités', color: '#8b5cf6' },
+                { id: 'cat_default_shopping', name: 'Achats', color: '#10b981' }
+            ]
         };
-        let actionHistory = []; 
+        
+        window.onerror = function(message, source, lineno, colno, error) {
+            console.error("Global error caught:", message, "at", source, lineno, colno, error);
+            // Optionally, display a user-friendly message here
+            // alert("Une erreur inattendue est survenue. Veuillez rafraîchir la page.");
+            return true; // Prevents default browser error handling
+        };
 
-        // Utility for input styling
         const INPUT_CLASSES = "mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md p-2";
         const LABEL_CLASSES = "block text-sm font-medium text-gray-700";
 
         async function saveData(key, data) {
+            const sharedDataKeysMap = {
+                'scheduleData': 'schedule',
+                'tasksData': 'tasks',
+                'transitionsData': 'transitions',
+                'actionHistory': 'actionHistory'
+            };
+
             try {
-                // For settingsData, if a familyId exists, save to Firestore instead of localforage
                 if (key === 'settingsData' && window.currentFamilyId) {
                     console.log(`Saving settingsData to Firestore for family ${window.currentFamilyId}`);
                     await firebase.firestore().collection('families').doc(window.currentFamilyId).collection('settings').doc('config').set(data, { merge: true });
-                } else if (key !== 'childrenData') { // Do not save childrenData to localforage
+                } else if (sharedDataKeysMap[key] && window.currentFamilyId) {
+                    const collectionName = sharedDataKeysMap[key];
+                    console.log(`Saving ${key} (as 'list') to Firestore doc 'sharedList' in collection '${collectionName}' for family ${window.currentFamilyId}`);
+                    await firebase.firestore().collection('families').doc(window.currentFamilyId).collection(collectionName).doc('sharedList').set({ list: data });
+                } else if (sharedDataKeysMap[key] && !window.currentFamilyId) {
+                    console.error(`Cannot save ${key} to Firestore: currentFamilyId is not available. Data not saved to Firestore.`);
+                    return; 
+                } else if (key !== 'childrenData') { // childrenData is managed by specific functions in auth.js
+                    console.log(`Saving ${key} to localforage.`);
                     await localforage.setItem(key, data);
                 }
-                console.log(`SUCCESS: Data saved for key: ${key}`, data);
-                 document.getElementById('lastUpdatedTimestamp').textContent = new Date().toLocaleString('fr-FR');
-                 localStorage.setItem('lastSaveTimestamp', new Date().toLocaleString('fr-FR'));
+                
+                console.log(`SUCCESS: Data operation for key: ${key}.`);
+                const timestampEl = document.getElementById('lastUpdatedTimestamp');
+                if (timestampEl) timestampEl.textContent = new Date().toLocaleString('fr-FR');
+                localStorage.setItem('lastSaveTimestamp', new Date().toLocaleString('fr-FR'));
+
             } catch (err) {
                 console.error(`FAILURE: Error saving data for key ${key}:`, err);
                 alert(`Failed to save data for ${key}. Check console.`);
@@ -915,47 +966,37 @@
         }
 
         async function loadData(key, defaultValue = []) {
+            const sharedDataKeys = ['scheduleData', 'tasksData', 'transitionsData', 'actionHistory'];
+            
             try {
-                // Children data is loaded from Firestore by auth.js
-                if (key === 'childrenData') {
-                    console.log("INFO: childrenData is managed by Firestore, not loaded from localforage by this function.");
-                    return window.childrenData || []; // Return global childrenData or empty if not yet loaded
+                if (key === 'childrenData' || (sharedDataKeys.includes(key) && window.currentFamilyId)) {
+                    console.log(`INFO: ${key} is primarily managed by Firestore when logged in. Returning default or current window state for initial load phase.`);
+                    return window[key] || defaultValue; 
                 }
 
                 const value = await localforage.getItem(key);
                 if (value !== null) {
                     console.log(`SUCCESS: Data loaded for key: ${key} from localforage`, value);
+                    if (key === 'settingsData') { 
+                        if (value && !Array.isArray(value.taskCategories)) value.taskCategories = [];
+                        if (value && !Array.isArray(value.transitionLocations)) value.transitionLocations = [];
+                    }
+                    return value;
                 } else {
                     console.log(`INFO: No data found for key: ${key} in localforage, using default value.`, defaultValue);
-                }
-                 if (value === null && key === 'settingsData') { 
-                     console.log(`No settings found in localforage, using default settings for key: ${key}`);
-                     const defaultSettings = JSON.parse(JSON.stringify(defaultValue));
-                     if (!Array.isArray(defaultSettings.taskCategories)) defaultSettings.taskCategories = [];
-                     if (!Array.isArray(defaultSettings.transitionLocations)) defaultSettings.transitionLocations = [];
-                     return defaultSettings;
-                }
-                if (value === null) {
-                    // For childrenData, this localforage load will be superseded by Firestore if logged in.
-                    // For other arrays, it provides an empty default if nothing in localforage.
-                    if ( (key === 'scheduleData' || key === 'transitionsData' || key === 'actionHistory' || key === 'tasksData') && Array.isArray(defaultValue) && defaultValue.length === 0) { 
-                        return [];
+                    if (key === 'settingsData' && defaultValue) { 
+                         if (!Array.isArray(defaultValue.taskCategories)) defaultValue.taskCategories = [];
+                         if (!Array.isArray(defaultValue.transitionLocations)) defaultValue.transitionLocations = [];
                     }
                     return defaultValue;
                 }
-                if (key === 'settingsData' && value && !Array.isArray(value.taskCategories)) {
-                    value.taskCategories = [];
-                }
-                if (key === 'settingsData' && value && !Array.isArray(value.transitionLocations)) {
-                    value.transitionLocations = [];
-                }
-                return value;
             } catch (err) {
                 console.error(`FAILURE: Error loading data for key ${key} from localforage:`, err);
                 alert(`Failed to load data for ${key}. Check console.`);
                 return defaultValue; 
             }
         }
+
 
         document.addEventListener('DOMContentLoaded', function() {
             initializeApp();
@@ -1138,20 +1179,19 @@
         }
 
 
-        function toggleDarkMode() {
+        async function toggleDarkMode() {
             isDarkMode = !isDarkMode;
             document.body.classList.toggle('dark-mode', isDarkMode);
             settingsData.theme = isDarkMode ? 'dark' : 'light';
-            saveData('settingsData', settingsData).then(() => {
-                 console.log("Theme preference saved:", settingsData.theme);
-                if (settingsData.theme === 'dark') {
-                    document.getElementById('themeDarkButton').classList.add('ring-2', 'ring-offset-2', 'ring-indigo-500');
-                    document.getElementById('themeLightButton').classList.remove('ring-2', 'ring-offset-2', 'ring-indigo-500');
-                } else {
-                    document.getElementById('themeLightButton').classList.add('ring-2', 'ring-offset-2', 'ring-indigo-500');
-                    document.getElementById('themeDarkButton').classList.remove('ring-2', 'ring-offset-2', 'ring-indigo-500');
-                }
-            }); 
+            await saveData('settingsData', settingsData); // Ensure this is awaited
+            console.log("Theme preference saved:", settingsData.theme);
+            if (settingsData.theme === 'dark') {
+                document.getElementById('themeDarkButton').classList.add('ring-2', 'ring-offset-2', 'ring-indigo-500');
+                document.getElementById('themeLightButton').classList.remove('ring-2', 'ring-offset-2', 'ring-indigo-500');
+            } else {
+                document.getElementById('themeLightButton').classList.add('ring-2', 'ring-offset-2', 'ring-indigo-500');
+                document.getElementById('themeDarkButton').classList.remove('ring-2', 'ring-offset-2', 'ring-indigo-500');
+            }
             const icon = document.querySelector('#darkModeToggle i');
             icon.classList.toggle('fa-moon', !isDarkMode);
             icon.classList.toggle('fa-sun', isDarkMode);
@@ -1431,13 +1471,13 @@
             if (child.medicalInfo.length < originalLength) { 
                 try {
                     await window.updateChildInFirestore(childId, child); 
+                    // No need to save actionHistory here, updateChildInFirestore should handle it or saveChildForm.
+                    // But if not, this is where you'd add it.
+                    // actionHistory.push({ timestamp: new Date().toISOString(), user: firebase.auth().currentUser?.email || 'System', action: 'Suppression Info Médicale Enfant', details: `Enfant ID: ${childId}, Info ID: ${medicalItemId}` });
+                    // await saveData('actionHistory', actionHistory);
                     if (typeof window.loadFirebaseData === 'function') {
-                        await window.loadFirebaseData();
-                        if (typeof showChildProfile === 'function') showChildProfile(childId);
-                    } else {
-                         console.error("loadFirebaseData function not found on window object");
-                         window.childrenData[childIndex] = child;
-                         if (typeof showChildProfile === 'function') showChildProfile(childId);
+                        await window.loadFirebaseData(); // Reload data
+                        if (typeof showChildProfile === 'function') showChildProfile(childId); // Refresh view
                     }
                 } catch (error) {
                     console.error("Error deleting medical item via Firestore:", error);
@@ -1493,12 +1533,10 @@
             if (child.activities.length < originalLength) { 
                 try {
                     await window.updateChildInFirestore(childId, child); 
+                     // actionHistory.push({ timestamp: new Date().toISOString(), user: firebase.auth().currentUser?.email || 'System', action: 'Suppression Activité Enfant', details: `Enfant ID: ${childId}, Activité ID: ${activityItemId}` });
+                    // await saveData('actionHistory', actionHistory);
                     if (typeof window.loadFirebaseData === 'function') {
                         await window.loadFirebaseData();
-                        if (typeof showChildProfile === 'function') showChildProfile(childId);
-                    } else {
-                        console.error("loadFirebaseData function not found on window object");
-                        window.childrenData[childIndex] = child;
                         if (typeof showChildProfile === 'function') showChildProfile(childId);
                     }
                 } catch (error) {
@@ -1550,7 +1588,6 @@
             name, dob, school, class: childClassValue, notes,
             medicalInfo: medicalInfoItems,
             activities: activitiesItems
-            // createdAt and updatedAt will be handled by Firestore functions in auth.js
         };
 
         try {
@@ -1559,29 +1596,35 @@
 
             if (currentlyEditingChildId) { 
                 const existingChild = window.childrenData.find(c => c.id === currentlyEditingChildId);
-                if (existingChild && existingChild.createdAt) {
+                if (existingChild && existingChild.createdAt) { // Preserve original createdAt if it exists
                     childObject.createdAt = existingChild.createdAt; 
+                } else { // Otherwise, set it if it's an update to a doc that somehow missed it
+                     childObject.createdAt = firebase.firestore.FieldValue.serverTimestamp();
                 }
                 await window.updateChildInFirestore(currentlyEditingChildId, childObject);
                 actionDetail = `Profil enfant modifié: ${name}`;
             } else { 
+                // For new child, createdAt will be set by addChildToFirestore
                 const savedChild = await window.addChildToFirestore(childObject);
                 newChildId = savedChild.id; 
                 actionDetail = `Enfant ajouté: ${name}`;
             }
             
-            actionHistory.push({ timestamp: new Date().toISOString(), user: currentUserForHistory, action: actionDetail });
+            actionHistory.push({ timestamp: new Date().toISOString(), user: currentUserForHistory, action: actionDetail, details: `ID Enfant: ${newChildId}` });
             await saveData('actionHistory', actionHistory); 
+            
             if(typeof renderActionHistory === 'function') renderActionHistory();
 
+            // Reload all Firebase data to ensure UI consistency, especially childrenData
             if (typeof window.loadFirebaseData === 'function') {
-                await window.loadFirebaseData();
+                await window.loadFirebaseData(); 
             } else {
                 console.error("loadFirebaseData function not found on window object");
             }
             
+            // After data is reloaded, show the profile (which will use the fresh childrenData)
             if (typeof showChildProfile === 'function' && newChildId) {
-                 showChildProfile(newChildId);
+                 showChildProfile(newChildId); 
             }
 
         } catch (error) {
@@ -1823,10 +1866,44 @@
             const darkModeToggle = document.getElementById('darkModeToggle');
             if (darkModeToggle) darkModeToggle.addEventListener('click', toggleDarkMode);
 
-            // Auth buttons - ensure these IDs exist from Step 1 of the plan (they do)
-            const regBtn = document.getElementById('registerButton');
-            // Ensure functions from auth.js are called via window scope if not automatically global
-            if (regBtn) regBtn.addEventListener('click', () => window.registerUser()); 
+            // Auth buttons
+            const showRegisterFormBtn = document.getElementById('showRegisterFormButton');
+            const loginForm = document.getElementById('loginForm');
+            const registrationForm = document.getElementById('registrationForm');
+            const authError = document.getElementById('authError');
+            const registrationError = document.getElementById('registrationError');
+
+            if (showRegisterFormBtn) {
+                showRegisterFormBtn.addEventListener('click', () => {
+                    if (loginForm) loginForm.classList.add('hidden');
+                    if (registrationForm) registrationForm.classList.remove('hidden');
+                    if (authError) authError.textContent = ''; 
+                    if (registrationError) registrationError.textContent = '';
+                });
+            }
+
+            const backToLoginBtn = document.getElementById('backToLoginButton');
+            if (backToLoginBtn) {
+                backToLoginBtn.addEventListener('click', () => {
+                    if (registrationForm) registrationForm.classList.add('hidden');
+                    if (loginForm) loginForm.classList.remove('hidden');
+                    if (registrationError) registrationError.textContent = '';
+                    // We might want to clear authError as well if switching views
+                    if (authError) authError.textContent = ''; 
+                });
+            }
+            
+            const completeRegBtn = document.getElementById('completeRegistrationButton');
+            if (completeRegBtn) {
+                completeRegBtn.addEventListener('click', () => {
+                    if (typeof window.registerFamilyAccount === 'function') {
+                        window.registerFamilyAccount();
+                    } else {
+                        console.error("registerFamilyAccount function is not defined on window.");
+                        if (registrationError) registrationError.textContent = "Erreur: La fonction d'inscription n'est pas prête.";
+                    }
+                });
+            }
             
             const loginBtn = document.getElementById('loginButton');
             if (loginBtn) loginBtn.addEventListener('click', () => window.loginUser());
@@ -1835,12 +1912,12 @@
             if (logoutBtn) logoutBtn.addEventListener('click', () => window.logoutUser());
         }
 
-        function setupCalendarEventListeners() {
+        async function setupCalendarEventListeners() { // Made async
             const applyConfigBtn = document.getElementById('applyCustodyConfigButton');
-            if (applyConfigBtn) applyConfigBtn.addEventListener('click', applyCustodyConfiguration);
+            if (applyConfigBtn) applyConfigBtn.addEventListener('click', applyCustodyConfiguration); // applyCustodyConfiguration is async
 
             const addExceptionBtn = document.getElementById('addExceptionButton');
-            if (addExceptionBtn) addExceptionBtn.addEventListener('click', addCustodyException);
+            if (addExceptionBtn) addExceptionBtn.addEventListener('click', addCustodyException); // addCustodyException is async
             
             const exceptionParent1Btn = document.getElementById('exceptionParent1Button');
             const exceptionParent2Btn = document.getElementById('exceptionParent2Button');
@@ -1869,12 +1946,12 @@
              console.log("Calendar configuration and exception event listeners set up.");
         }
 
-        function setupTransitionEventListeners() {
+        async function setupTransitionEventListeners() { // Made async
             const saveSettingsBtn = document.getElementById('saveTransitionSettingsButton');
-            if(saveSettingsBtn) saveSettingsBtn.addEventListener('click', saveTransitionSettings);
+            if(saveSettingsBtn) saveSettingsBtn.addEventListener('click', saveTransitionSettings); // saveTransitionSettings is async
 
             const addLocationBtn = document.getElementById('addTransitionLocationButton');
-            if(addLocationBtn) addLocationBtn.addEventListener('click', () => {
+            if(addLocationBtn) addLocationBtn.addEventListener('click', async () => { // Made async
                 const newLocName = prompt("Nom du nouveau lieu (Ex: Parc Central):");
                 if (newLocName) {
                     const newLoc = {
@@ -1885,17 +1962,16 @@
                         lng: parseFloat(prompt("Longitude (optionnel, ex: 2.350):")) || null,
                     };
                     settingsData.transitionLocations.push(newLoc);
-                    saveData('settingsData', settingsData).then(() => {
-                        renderTransitionLocations();
-                        refreshTransitionMap();
-                        populateTransitionSettingsForm(); 
-                        alert("Lieu ajouté (fonctionnalité basique).");
-                    });
+                    await saveData('settingsData', settingsData); // Await save
+                    renderTransitionLocations();
+                    refreshTransitionMap();
+                    populateTransitionSettingsForm(); 
+                    alert("Lieu ajouté.");
                 }
             });
              const addManualTransitionBtn = document.getElementById('addManualTransitionButton');
             if(addManualTransitionBtn) addManualTransitionBtn.addEventListener('click', () => {
-                alert("Ajout manuel de transition - à implémenter.");
+                alert("Ajout manuel de transition - à implémenter."); // This would need to be async if it saved data
             });
         }
 
@@ -1942,19 +2018,22 @@
         }
 
         async function loadSavedData() { 
-            // childrenData is now loaded from Firestore via loadFirebaseData in auth.js
-            // scheduleData = await loadData('scheduleData', []); // Will be loaded from Firestore later
-            // transitionsData = await loadData('transitionsData', []); // Will be loaded from Firestore later
-            // tasksData = await loadData('tasksData', []); // Will be loaded from Firestore later
             settingsData = await loadData('settingsData', settingsData); 
-            actionHistory = await loadData('actionHistory', []); // May move to Firestore
+            actionHistory = await loadData('actionHistory', []); // For logged-out state or initial load before Firestore
+
+            // scheduleData, transitionsData, tasksData are primarily loaded via loadFirebaseData if logged in.
+            // Initialize them from local state or defaults if not handled by loadFirebaseData early.
+            scheduleData = await loadData('scheduleData', []);
+            transitionsData = await loadData('transitionsData', []);
+            tasksData = await loadData('tasksData', []);
+
 
             if (!settingsData.taskCategories || settingsData.taskCategories.length === 0) {
                 settingsData.taskCategories = [
-                    { id: 'cat1', name: 'Médical', color: '#ef4444' }, 
-                    { id: 'cat2', name: 'Achats', color: '#10b981' }, 
-                    { id: 'cat3', name: 'École', color: '#f59e0b' },  
-                    { id: 'cat4', name: 'Activités', color: '#8b5cf6' } 
+                    { id: 'cat_default_medical', name: 'Médical', color: '#ef4444' }, 
+                    { id: 'cat_default_school', name: 'École', color: '#f59e0b' },  
+                    { id: 'cat_default_activities', name: 'Activités', color: '#8b5cf6' },
+                    { id: 'cat_default_shopping', name: 'Achats', color: '#10b981' }
                 ];
             }
              if (!settingsData.transitionLocations) settingsData.transitionLocations = [];
@@ -1963,9 +2042,12 @@
             isDarkMode = settingsData.theme === 'dark';
             document.body.classList.toggle('dark-mode', isDarkMode);
             const icon = document.querySelector('#darkModeToggle i');
-            if (isDarkMode) { icon.classList.remove('fa-moon'); icon.classList.add('fa-sun'); }
-            else { icon.classList.remove('fa-sun'); icon.classList.add('fa-moon'); }
-            document.getElementById('currentParent').textContent = settingsData.parent1Name; 
+            if (icon) { 
+                if (isDarkMode) { icon.classList.remove('fa-moon'); icon.classList.add('fa-sun'); }
+                else { icon.classList.remove('fa-sun'); icon.classList.add('fa-moon'); }
+            }
+            const currentParentEl = document.getElementById('currentParent');
+            if (currentParentEl) currentParentEl.textContent = settingsData.parent1Name; 
             
             const parent1ColorInput = document.getElementById('parent1CalendarColor'); 
             if (parent1ColorInput) parent1ColorInput.value = settingsData.parentsColors.parent1;
@@ -1982,12 +2064,10 @@
             if(exceptionParent1Btn) exceptionParent1Btn.textContent = settingsData.parent1Name;
             if(exceptionParent2Btn) exceptionParent2Btn.textContent = settingsData.parent2Name;
 
-            console.log('Local data (settings, action history) loaded. UI updated. Children data will be loaded from Firestore if user is logged in.');
+            console.log('Local data (settings, action history) loaded. UI updated. Shared data will be loaded from Firestore if user is logged in.');
             
             updateGlobalParentNameDisplays(); 
             
-            // childrenData will be populated by loadFirebaseData if a user is logged in.
-            // If not logged in, childrenData will be empty, and showChildProfile(null) is appropriate.
             if (childrenData && childrenData.length > 0) {
                 showChildProfile(childrenData[0].id); 
             } else {
@@ -2012,7 +2092,7 @@
         }
 
 
-        async function applyCustodyConfiguration() {
+        async function applyCustodyConfiguration() { // Marked async
             const model = document.getElementById('custodyModel').value;
             const startDateStr = document.getElementById('cycleStartDate').value;
             const parent1Color = document.getElementById('parent1CalendarColor').value;
@@ -2083,7 +2163,7 @@
             }
             
             scheduleData.push(...newGeneratedEvents);
-            await saveData('scheduleData', scheduleData);
+            await saveData('scheduleData', scheduleData); 
             await generateTransitionsFromSchedule(); 
             renderDashboard(); 
             
@@ -2094,7 +2174,7 @@
             alert("Configuration du planning appliquée et sauvegardée !");
         }
 
-        async function addCustodyException() {
+        async function addCustodyException() { // Marked async
             const dateStr = document.getElementById('exceptionDate').value;
             const selectedParentName = document.getElementById('selectedExceptionParent').value;
             const reason = document.getElementById('exceptionReason').value.trim();
@@ -2155,7 +2235,7 @@
         }
 
         // --- Transitions Management Functions ---
-        async function generateTransitionsFromSchedule() {
+        async function generateTransitionsFromSchedule() { // Marked async
             console.log("generateTransitionsFromSchedule: Starting.");
             if (!scheduleData || scheduleData.length === 0) {
                 transitionsData = [];
@@ -2167,7 +2247,6 @@
             const sortedSchedule = [...scheduleData].sort((a, b) => new Date(a.start) - new Date(b.start));
             console.log(`generateTransitionsFromSchedule: Processing ${sortedSchedule.length} schedule events.`);
             
-            // Keep manual transitions
             const manualTransitions = transitionsData.filter(t => !t.autoGenerated);
             let newAutoTransitions = [];
             console.log(`generateTransitionsFromSchedule: Kept ${manualTransitions.length} manual transitions.`);
@@ -2177,17 +2256,13 @@
                 const currentEvent = sortedSchedule[i];
                 let currentEventParentName = null;
 
-                // Determine parent for the current event
                 if (currentEvent.title.includes(settingsData.parent1Name)) {
                     currentEventParentName = settingsData.parent1Name;
                 } else if (currentEvent.title.includes(settingsData.parent2Name)) {
                     currentEventParentName = settingsData.parent2Name;
                 }
-                // else, currentEventParentName remains null (e.g. a generic holiday not assigned to a parent)
 
                 if (lastParent && currentEventParentName && currentEventParentName !== lastParent) {
-                    // This is a change of custody, a potential transition point.
-                    // Check if a manual transition already covers this exact day and parent switch.
                     const existingManualForThisDay = manualTransitions.find(t => 
                         t.date === currentEvent.start && 
                         t.fromParent === lastParent && 
@@ -2195,11 +2270,11 @@
                     );
 
                     if (existingManualForThisDay) {
-                        console.log(`generateTransitionsFromSchedule: Manual transition already exists for ${currentEvent.start} from ${lastParent} to ${currentEventParentName}. Skipping auto-generation.`);
+                        console.log(`generateTransitionsFromSchedule: Manual transition already exists for ${currentEvent.start}.`);
                     } else {
                         const defaultLocation = settingsData.transitionLocations.find(loc => loc.id === settingsData.defaultTransitionLocationId);
                         const newTransition = {
-                            id: `trans-auto-${Date.now()}-${Math.random().toString(36).substr(2,5)}-${i}`, // Added index for more unique ID
+                            id: `trans-auto-${Date.now()}-${Math.random().toString(36).substr(2,5)}-${i}`,
                             scheduleEventId: currentEvent.id,
                             date: currentEvent.start, 
                             time: settingsData.defaultTransitionTime || '18:00',
@@ -2212,17 +2287,16 @@
                             autoGenerated: true
                         };
                         newAutoTransitions.push(newTransition);
-                        // console.log(`generateTransitionsFromSchedule: Generated auto-transition for ${newTransition.date} from ${newTransition.fromParent} to ${newTransition.toParent}`);
                     }
                 }
-                if (currentEventParentName) { // Only update lastParent if the current event clearly defines a parent
+                if (currentEventParentName) { 
                     lastParent = currentEventParentName;
                 }
             }
             
             transitionsData = [...manualTransitions, ...newAutoTransitions];
             await saveData('transitionsData', transitionsData);
-            console.log(`generateTransitionsFromSchedule: Completed. Generated ${newAutoTransitions.length} new auto-transitions. Total transitions now: ${transitionsData.length}.`);
+            console.log(`generateTransitionsFromSchedule: Completed. Total transitions: ${transitionsData.length}.`);
         }
 
         function renderTransitions() {
@@ -2323,7 +2397,7 @@
         }
 
 
-        async function confirmTransition(transitionId, fromDashboard = false) {
+        async function confirmTransition(transitionId, fromDashboard = false) { // Marked async
             const transIndex = transitionsData.findIndex(t => t.id === transitionId);
             if (transIndex > -1) {
                 transitionsData[transIndex].confirmed = true;
@@ -2336,7 +2410,7 @@
             }
         }
 
-        function editTransition(transitionId) {
+        function editTransition(transitionId) { // Would need to be async if it saved data
             alert(`Modification de la transition ID: ${transitionId} - À implémenter.`);
         }
 
@@ -2390,7 +2464,7 @@
             document.getElementById('requestConfirmTransition').checked = settingsData.notificationPreferences.requestConfirmTransition === true;
         }
 
-        async function saveTransitionSettings() {
+        async function saveTransitionSettings() { // Marked async
             settingsData.defaultTransitionTime = document.getElementById('defaultTransitionTime').value;
             settingsData.defaultTransitionLocationId = document.getElementById('defaultTransitionLocationId').value;
             settingsData.notificationPreferences.notifyDayBefore = document.getElementById('notifyDayBefore').checked;
@@ -2407,9 +2481,9 @@
         // --- Tasks Management Functions ---
         function setupTaskEventListeners() {
             document.getElementById('showNewTaskFormButton').addEventListener('click', showNewTaskForm);
-            document.getElementById('taskForm').addEventListener('submit', saveTaskForm);
+            document.getElementById('taskForm').addEventListener('submit', saveTaskForm); // saveTaskForm is async
             document.getElementById('cancelTaskFormButton').addEventListener('click', hideTaskForm);
-            document.getElementById('addTaskCategoryButton').addEventListener('click', addTaskCategory);
+            document.getElementById('addTaskCategoryButton').addEventListener('click', addTaskCategory); // addTaskCategory is async
             
             const statusFilters = document.getElementById('taskStatusFilters');
             if(statusFilters) {
@@ -2496,7 +2570,7 @@
             }
         }
 
-        async function addTaskCategory() {
+        async function addTaskCategory() { // Marked async
             const name = prompt("Nom de la nouvelle catégorie:");
             if (!name) return;
             const color = prompt("Couleur de la catégorie (code hexadécimal, ex: #ff0000):", "#cccccc");
@@ -2546,7 +2620,7 @@
             editingTaskId = null;
         }
 
-        async function saveTaskForm(event) {
+        async function saveTaskForm(event) { // Marked async
             event.preventDefault();
             const currentUser = document.getElementById('currentParent').textContent;
             const description = document.getElementById('taskDescriptionInput').value.trim();
@@ -2654,7 +2728,7 @@
             renderDashboardTasks();
         }
         
-        async function toggleTaskStatus(taskId) {
+        async function toggleTaskStatus(taskId) { // Marked async
             const taskIndex = tasksData.findIndex(t => t.id === taskId);
             if (taskIndex > -1) {
                 tasksData[taskIndex].status = tasksData[taskIndex].status === 'pending' ? 'completed' : 'pending';
@@ -2666,7 +2740,7 @@
             }
         }
 
-        function editTask(taskId) {
+        function editTask(taskId) { // This function itself doesn't save, saveTaskForm does.
             const task = tasksData.find(t => t.id === taskId);
             if (task) {
                 editingTaskId = taskId;
@@ -2751,13 +2825,13 @@
 
         // --- Settings Tab Functions ---
         function setupSettingsEventListeners() {
-            document.getElementById('saveAccountSettingsButton').addEventListener('click', saveAccountSettings);
-            document.getElementById('themeLightButton').addEventListener('click', () => setDisplayTheme('light'));
-            document.getElementById('themeDarkButton').addEventListener('click', () => setDisplayTheme('dark'));
-            document.getElementById('saveDisplayPreferencesButton').addEventListener('click', saveDisplayPreferences);
+            document.getElementById('saveAccountSettingsButton').addEventListener('click', saveAccountSettings); // saveAccountSettings is async
+            document.getElementById('themeLightButton').addEventListener('click', () => setDisplayTheme('light')); // setDisplayTheme calls saveData, which is async
+            document.getElementById('themeDarkButton').addEventListener('click', () => setDisplayTheme('dark')); // setDisplayTheme calls saveData
+            document.getElementById('saveDisplayPreferencesButton').addEventListener('click', saveDisplayPreferences); // saveDisplayPreferences is async
             document.getElementById('exportDataButton').addEventListener('click', exportData);
-            document.getElementById('importDataInput').addEventListener('change', importData);
-            document.getElementById('clearActionHistoryButton').addEventListener('click', clearActionHistory);
+            document.getElementById('importDataInput').addEventListener('change', importData); // importData is async
+            document.getElementById('clearActionHistoryButton').addEventListener('click', clearActionHistory); // clearActionHistory is async
         }
 
         function populateAccountSettingsForm() {
@@ -2765,10 +2839,10 @@
             document.getElementById('parent2NameInput').value = settingsData.parent2Name || '';
         }
         
-        async function saveAccountSettings() {
+        async function saveAccountSettings() { // Marked async
             const parent1Name = document.getElementById('parent1NameInput').value.trim();
             const parent2Name = document.getElementById('parent2NameInput').value.trim();
-            const oldP1Name = settingsData.parent1Name; // Store old names before updating
+            const oldP1Name = settingsData.parent1Name; 
             const oldP2Name = settingsData.parent2Name;
 
             let changed = false;
@@ -2783,14 +2857,13 @@
             
             if (changed) {
                 await saveData('settingsData', settingsData);
-                 // Update currentParent global variable if the current user's name changed
                 const currentParentDisplay = document.getElementById('currentParent').textContent;
                 if (currentParentDisplay === oldP1Name && oldP1Name !== settingsData.parent1Name) {
                     currentParent = settingsData.parent1Name;
                 } else if (currentParentDisplay === oldP2Name && oldP2Name !== settingsData.parent2Name) {
                     currentParent = settingsData.parent2Name;
                 }
-                document.getElementById('currentParent').textContent = currentParent; // Ensure header is updated
+                document.getElementById('currentParent').textContent = currentParent; 
 
                 updateGlobalParentNameDisplays(); 
                 
@@ -2803,7 +2876,7 @@
             }
         }
 
-        function setDisplayTheme(theme) { 
+        async function setDisplayTheme(theme) { // Marked async
             settingsData.theme = theme;
             isDarkMode = theme === 'dark';
             document.body.classList.toggle('dark-mode', isDarkMode);
@@ -2811,7 +2884,6 @@
             icon.classList.toggle('fa-moon', !isDarkMode);
             icon.classList.toggle('fa-sun', isDarkMode);
             
-            // Update theme button active state immediately
             if (settingsData.theme === 'dark') {
                 document.getElementById('themeDarkButton').classList.add('ring-2', 'ring-offset-2', 'ring-indigo-500');
                 document.getElementById('themeLightButton').classList.remove('ring-2', 'ring-offset-2', 'ring-indigo-500');
@@ -2819,13 +2891,15 @@
                 document.getElementById('themeLightButton').classList.add('ring-2', 'ring-offset-2', 'ring-indigo-500');
                 document.getElementById('themeDarkButton').classList.remove('ring-2', 'ring-offset-2', 'ring-indigo-500');
             }
-            // Save is handled by saveDisplayPreferences or if called directly, should be saved there.
+            await saveData('settingsData', settingsData); // Save after updating theme in settingsData
         }
 
-        async function saveDisplayPreferences() {
+        async function saveDisplayPreferences() { // Marked async
             settingsData.defaultCalendarView = document.getElementById('defaultCalendarViewSelect').value;
-            // Theme is already set by setDisplayTheme and updated in settingsData by it
-            await saveData('settingsData', settingsData);
+            // Theme is set by setDisplayTheme, which also calls saveData.
+            // If setDisplayTheme is not called first, then theme needs to be explicitly saved here.
+            // Assuming setDisplayTheme is called to change theme, then this function just saves calendar view.
+            await saveData('settingsData', settingsData); // This will save both theme and calendar view
             if (fullCalendarInstance) { 
                 fullCalendarInstance.changeView(settingsData.defaultCalendarView);
             }
@@ -2868,7 +2942,7 @@
             });
         }
 
-        async function clearActionHistory() {
+        async function clearActionHistory() { // Marked async
             if (confirm("Êtes-vous sûr de vouloir effacer tout l'historique des modifications ? Cette action est irréversible.")) {
                 actionHistory = [];
                 await saveData('actionHistory', actionHistory);
@@ -3232,29 +3306,27 @@
             alert("Données exportées au format JSON!");
         }
 
-        function importData(event) {
+        async function importData(event) { // Marked async
             const file = event.target.files[0];
             if (!file) return;
 
             const reader = new FileReader();
-            reader.onload = async function(e) {
+            reader.onload = async function(e) { // Inner function also async
                 try {
                     const imported = JSON.parse(e.target.result);
                     if (confirm("Êtes-vous sûr de vouloir importer ces données ? Toutes les données actuelles seront remplacées.")) {
                         settingsData = imported.settingsData || settingsData;
-                        // childrenData is now managed by Firestore, so we don't load it from JSON this way.
-                        // childrenData = imported.childrenData || []; 
+                        // childrenData is handled by Firestore direct functions, not bulk import here
                         scheduleData = imported.scheduleData || [];
                         transitionsData = imported.transitionsData || [];
                         tasksData = imported.tasksData || [];
                         actionHistory = imported.actionHistory || [];
 
                         await saveData('settingsData', settingsData);
-                        // await localforage.setItem('childrenData', childrenData); // Removed
-                        await localforage.setItem('scheduleData', scheduleData);
-                        await localforage.setItem('transitionsData', transitionsData);
-                        await localforage.setItem('tasksData', tasksData);
-                        await localforage.setItem('actionHistory', actionHistory);
+                        await saveData('scheduleData', scheduleData);
+                        await saveData('transitionsData', transitionsData);
+                        await saveData('tasksData', tasksData);
+                        await saveData('actionHistory', actionHistory);
                         
                         alert("Données importées avec succès ! L'application va se recharger.");
                         location.reload();
@@ -3333,7 +3405,7 @@
             console.log(`triggerCsvDownload: Download for ${filename} should have started.`);
         }
 
-        async function exportDataAsCsv() {
+        async function exportDataAsCsv() { // Marked async
             console.log("exportDataAsCsv: Starting CSV export process.");
             try {
                 // 1. Children Data
@@ -3348,7 +3420,6 @@
 
                 // 2. Schedule Data
                 const scheduleHeaders = ['id', 'title', 'start', 'end', 'color', 'allDay', 'isException', 'reason', 'generated'];
-                // Note: convertToCSV handles extendedProps extraction based on headers list
                 const scheduleCsv = convertToCSV(scheduleData, scheduleHeaders);
                 triggerCsvDownload(scheduleCsv, 'planning_export.csv');
 
@@ -3364,7 +3435,7 @@
 
                 alert("Exportation CSV terminée. Vérifiez vos téléchargements.");
                 actionHistory.push({ timestamp: new Date().toISOString(), user: currentParent, action: 'Exportation CSV effectuée' });
-                await saveData('actionHistory', actionHistory);
+                await saveData('actionHistory', actionHistory); // Await save
                 renderActionHistory();
             } catch (error) {
                 console.error("exportDataAsCsv: Error during CSV export process:", error);
