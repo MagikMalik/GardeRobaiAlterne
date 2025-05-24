@@ -121,72 +121,74 @@
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
-    <header class="bg-blue-600 text-white shadow-lg no-print">
-        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-            <h1 class="text-2xl font-bold flex items-center">
-                <i class="fas fa-child mr-2"></i>
-                <i class="fas fa-exchange-alt mx-1"></i>
-                <i class="fas fa-child mr-2"></i>
-                Garde Alternée
-            </h1>
-            <div class="flex items-center">
-                <div class="mr-4">
-                    <span id="currentParent" class="font-semibold">Parent 1</span>
-                    <button onclick="toggleParent()" class="ml-2 bg-white text-blue-600 px-2 py-1 rounded-full text-xs">
-                        Changer
+    <div id="mainAppHeader" class="hidden"> {/* Wrapper for header, hidden by default */}
+        <header class="bg-blue-600 text-white shadow-lg no-print">
+            <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+                <h1 class="text-2xl font-bold flex items-center">
+                    <i class="fas fa-child mr-2"></i>
+                    <i class="fas fa-exchange-alt mx-1"></i>
+                    <i class="fas fa-child mr-2"></i>
+                    Garde Alternée
+                </h1>
+                <div class="flex items-center">
+                    <div class="mr-4">
+                        <span id="currentParent" class="font-semibold">Parent 1</span>
+                        <button onclick="toggleParent()" class="ml-2 bg-white text-blue-600 px-2 py-1 rounded-full text-xs">
+                            Changer
+                        </button>
+                    </div>
+                    <button id="darkModeToggle" class="bg-blue-700 p-2 rounded-full">
+                        <i class="fas fa-moon"></i>
                     </button>
                 </div>
-                <button id="darkModeToggle" class="bg-blue-700 p-2 rounded-full">
-                    <i class="fas fa-moon"></i>
-                </button>
             </div>
-        </div>
-        <nav class="bg-blue-700">
-            <div class="container mx-auto px-4">
-                <ul class="flex overflow-x-auto whitespace-nowrap py-2" id="mainTabs">
-                    <li>
-                        <button onclick="switchTab('dashboard')" class="text-white px-4 py-2 mx-1 rounded-lg hover:bg-blue-800 tab-button active" data-tab="dashboard">
-                            <i class="fas fa-home mr-2"></i>Tableau de bord
-                        </button>
-                    </li>
-                    <li>
-                        <button onclick="switchTab('calendar')" class="text-white px-4 py-2 mx-1 rounded-lg hover:bg-blue-800 tab-button" data-tab="calendar">
-                            <i class="far fa-calendar-alt mr-2"></i>Calendrier
-                        </button>
-                    </li>
-                    <li>
-                        <button onclick="switchTab('transitions')" class="text-white px-4 py-2 mx-1 rounded-lg hover:bg-blue-800 tab-button" data-tab="transitions">
-                            <i class="fas fa-exchange-alt mr-2"></i>Transitions
-                        </button>
-                    </li>
-                    <li>
-                        <button onclick="switchTab('children')" class="text-white px-4 py-2 mx-1 rounded-lg hover:bg-blue-800 tab-button" data-tab="children">
-                            <i class="fas fa-child mr-2"></i>Enfants
-                        </button>
-                    </li>
-                    <li>
-                        <button onclick="switchTab('tasks')" class="text-white px-4 py-2 mx-1 rounded-lg hover:bg-blue-800 tab-button" data-tab="tasks">
-                            <i class="fas fa-tasks mr-2"></i>Tâches
-                        </button>
-                    </li>
-                    <li>
-                        <button onclick="switchTab('stats')" class="text-white px-4 py-2 mx-1 rounded-lg hover:bg-blue-800 tab-button" data-tab="stats">
-                            <i class="fas fa-chart-pie mr-2"></i>Statistiques
-                        </button>
-                    </li>
-                    <li>
-                        <button onclick="switchTab('settings')" class="text-white px-4 py-2 mx-1 rounded-lg hover:bg-blue-800 tab-button" data-tab="settings">
-                            <i class="fas fa-cog mr-2"></i>Paramètres
-                        </button>
-                    </li>
-                </ul>
-            </div>
-        </nav>
-    </header>
+            <nav class="bg-blue-700">
+                <div class="container mx-auto px-4">
+                    <ul class="flex overflow-x-auto whitespace-nowrap py-2" id="mainTabs">
+                        <li>
+                            <button onclick="switchTab('dashboard')" class="text-white px-4 py-2 mx-1 rounded-lg hover:bg-blue-800 tab-button" data-tab="dashboard">
+                                <i class="fas fa-home mr-2"></i>Tableau de bord
+                            </button>
+                        </li>
+                        <li>
+                            <button onclick="switchTab('calendar')" class="text-white px-4 py-2 mx-1 rounded-lg hover:bg-blue-800 tab-button" data-tab="calendar">
+                                <i class="far fa-calendar-alt mr-2"></i>Calendrier
+                            </button>
+                        </li>
+                        <li>
+                            <button onclick="switchTab('transitions')" class="text-white px-4 py-2 mx-1 rounded-lg hover:bg-blue-800 tab-button" data-tab="transitions">
+                                <i class="fas fa-exchange-alt mr-2"></i>Transitions
+                            </button>
+                        </li>
+                        <li>
+                            <button onclick="switchTab('children')" class="text-white px-4 py-2 mx-1 rounded-lg hover:bg-blue-800 tab-button" data-tab="children">
+                                <i class="fas fa-child mr-2"></i>Enfants
+                            </button>
+                        </li>
+                        <li>
+                            <button onclick="switchTab('tasks')" class="text-white px-4 py-2 mx-1 rounded-lg hover:bg-blue-800 tab-button" data-tab="tasks">
+                                <i class="fas fa-tasks mr-2"></i>Tâches
+                            </button>
+                        </li>
+                        <li>
+                            <button onclick="switchTab('stats')" class="text-white px-4 py-2 mx-1 rounded-lg hover:bg-blue-800 tab-button" data-tab="stats">
+                                <i class="fas fa-chart-pie mr-2"></i>Statistiques
+                            </button>
+                        </li>
+                        <li>
+                            <button onclick="switchTab('settings')" class="text-white px-4 py-2 mx-1 rounded-lg hover:bg-blue-800 tab-button active" data-tab="settings">
+                                <i class="fas fa-cog mr-2"></i>Paramètres
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+        </header>
+    </div>
 
     <main class="container mx-auto px-4 py-6">
         <!-- DASHBOARD TAB -->
-        <section id="dashboard" class="tab-content active">
+        <section id="dashboard" class="tab-content hidden"> 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="md:col-span-2">
                     <div class="bg-white rounded-lg shadow-md p-4 mb-6">
@@ -246,7 +248,7 @@
         </section>
 
         <!-- CALENDAR TAB -->
-        <section id="calendar" class="tab-content">
+        <section id="calendar" class="tab-content hidden">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div class="md:col-span-3">
                     <div class="bg-white rounded-lg shadow-md p-4 mb-6" style="height:42rem;">
@@ -291,7 +293,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <button type="button" id="applyCustodyConfigButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full">
+                            <button type="button" id="applyCustodyConfigButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full" disabled>
                                 Appliquer les modifications
                             </button>
                         </form>
@@ -322,7 +324,7 @@
                                 </label>
                                 <input type="text" id="exceptionReason" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Ex: Voyage scolaire">
                             </div>
-                            <button type="button" id="addExceptionButton" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full">
+                            <button type="button" id="addExceptionButton" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full" disabled>
                                 Ajouter l'exception
                             </button>
                         </form>
@@ -332,13 +334,13 @@
         </section>
 
         <!-- TRANSITIONS TAB -->
-        <section id="transitions" class="tab-content">
+        <section id="transitions" class="tab-content hidden">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <div class="bg-white rounded-lg shadow-md p-4 mb-6">
                         <div class="flex justify-between items-center mb-4">
                             <h2 class="text-xl font-bold text-blue-600">Prochaines transitions</h2>
-                            <button id="addManualTransitionButton" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg text-sm">
+                            <button id="addManualTransitionButton" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg text-sm" disabled>
                                 <i class="fas fa-plus mr-1"></i> Ajouter
                             </button>
                         </div>
@@ -366,7 +368,7 @@
                             {/* Populated by JS */}
                             <li>Aucun lieu enregistré.</li>
                         </ul>
-                        <button id="addTransitionLocationButton" class="mt-4 bg-green-500 hover:bg-green-600 text-white w-full py-2 rounded-lg">
+                        <button id="addTransitionLocationButton" class="mt-4 bg-green-500 hover:bg-green-600 text-white w-full py-2 rounded-lg" disabled>
                             <i class="fas fa-plus mr-1"></i> Ajouter un lieu
                         </button>
                     </div>
@@ -408,7 +410,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <button type="button" id="saveTransitionSettingsButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full">
+                            <button type="button" id="saveTransitionSettingsButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full" disabled>
                                 Enregistrer les paramètres
                             </button>
                         </form>
@@ -418,7 +420,7 @@
         </section>
 
         <!-- CHILDREN TAB -->
-        <section id="children" class="tab-content">
+        <section id="children" class="tab-content hidden">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="md:col-span-1">
                     <div class="bg-white rounded-lg shadow-md p-4 mb-6">
@@ -434,7 +436,7 @@
                         {/* Child profile details or form will be populated by JS */}
                         <div class="flex justify-between items-center mb-6">
                             <h2 id="childProfileTitle" class="text-2xl font-bold text-blue-600">Sélectionnez un enfant</h2>
-                            <button id="mainChildFormButton" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg">
+                            <button id="mainChildFormButton" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg" disabled>
                                 {/* Button text/icon will change based on context */}
                             </button>
                         </div>
@@ -448,7 +450,7 @@
         </section>
 
         <!-- TASKS TAB -->
-        <section id="tasks" class="tab-content">
+        <section id="tasks" class="tab-content hidden">
              <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="md:col-span-2">
                     {/* Add/Edit Task Form (Initially Hidden) */}
@@ -485,7 +487,7 @@
                             </div>
                             <div class="flex justify-end space-x-2">
                                 <button type="button" id="cancelTaskFormButton" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Annuler</button>
-                                <button type="submit" id="saveTaskFormButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Enregistrer la tâche</button>
+                                <button type="submit" id="saveTaskFormButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" disabled>Enregistrer la tâche</button>
                             </div>
                         </form>
                     </div>
@@ -494,7 +496,7 @@
                         <div class="flex justify-between items-center mb-4">
                             <h2 class="text-xl font-bold text-blue-600">Liste des tâches partagées</h2>
                             <div>
-                                <button id="showNewTaskFormButton" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg">
+                                <button id="showNewTaskFormButton" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg" disabled>
                                     <i class="fas fa-plus mr-1"></i> Nouvelle tâche
                                 </button>
                             </div>
@@ -524,7 +526,7 @@
                         <ul id="taskCategoriesList" class="space-y-2">
                             {/* Categories will be populated by JS */}
                         </ul>
-                        <button id="addTaskCategoryButton" class="mt-4 bg-blue-500 hover:bg-blue-600 text-white w-full py-2 rounded-lg">
+                        <button id="addTaskCategoryButton" class="mt-4 bg-blue-500 hover:bg-blue-600 text-white w-full py-2 rounded-lg" disabled>
                             <i class="fas fa-plus mr-1"></i> Ajouter une catégorie
                         </button>
                     </div>
@@ -565,7 +567,7 @@
         </section>
 
         <!-- STATS TAB -->
-        <section id="stats" class="tab-content">
+        <section id="stats" class="tab-content hidden">
              <div class="bg-white rounded-lg shadow-md p-4 mb-6">
                 <h2 class="text-xl font-bold mb-4 text-blue-600">Filtres et paramètres des statistiques</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -620,10 +622,10 @@
                     </div>
                 </div>
                 <div class="mt-6 flex justify-between items-center">
-                    <button id="applyStatsFiltersButton" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg">
+                    <button id="applyStatsFiltersButton" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg" disabled>
                         Appliquer les filtres
                     </button>
-                    <button id="exportStatsButton" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-lg text-sm">
+                    <button id="exportStatsButton" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-lg text-sm" disabled>
                         <i class="fas fa-download mr-1"></i> Exporter les données
                     </button>
                 </div>
@@ -677,148 +679,156 @@
         </section>
 
         <!-- SETTINGS TAB -->
-        <section id="settings" class="tab-content">
+        <section id="settings" class="tab-content active"> {/* Default active tab */}
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="md:col-span-1">
-                    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
-                        <h2 class="text-xl font-bold mb-4 text-blue-600">Paramètres du compte</h2>
-                        <form id="accountSettingsForm">
-                            <div id="authContainer">
-                                <div id="loginForm">
-                                    <h3 class="text-lg font-semibold mb-2 text-blue-600">Connexion</h3>
-                                    <div class="mb-4">
-                                        <label for="emailInput" class="block text-gray-700 text-sm font-bold mb-2">Email</label>
-                                        <input type="email" id="emailInput" class="${INPUT_CLASSES}" placeholder="email@example.com">
-                                    </div>
-                                    <div class="mb-4">
-                                        <label for="passwordInput" class="block text-gray-700 text-sm font-bold mb-2">Mot de passe</label>
-                                        <input type="password" id="passwordInput" class="${INPUT_CLASSES}" placeholder="********">
-                                    </div>
-                                    <button type="button" id="loginButton" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded w-full mb-2">
-                                        Se connecter
-                                    </button>
-                                    <button type="button" id="showRegisterFormButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full">
-                                        S'inscrire (Nouveau compte)
-                                    </button>
-                                    <p id="authError" class="text-red-500 text-sm mt-2"></p>
+                    <div class="bg-white rounded-lg shadow-md p-4 mb-6"> 
+                        <h2 class="text-xl font-bold mb-4 text-blue-600">Authentification</h2>
+                        <div id="authContainer"> {/* This container is always visible by default */}
+                            <div id="loginForm"> {/* Visible by default */}
+                                <h3 class="text-lg font-semibold mb-2 text-blue-600">Connexion</h3>
+                                <div class="mb-4">
+                                    <label for="emailInput" class="block text-gray-700 text-sm font-bold mb-2">Email</label>
+                                    <input type="email" id="emailInput" class="${INPUT_CLASSES}" placeholder="email@example.com">
                                 </div>
+                                <div class="mb-4">
+                                    <label for="passwordInput" class="block text-gray-700 text-sm font-bold mb-2">Mot de passe</label>
+                                    <input type="password" id="passwordInput" class="${INPUT_CLASSES}" placeholder="********">
+                                </div>
+                                <button type="button" id="loginButton" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded w-full mb-2">
+                                    Se connecter
+                                </button>
+                                <button type="button" id="showRegisterFormButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full">
+                                    S'inscrire (Nouveau compte)
+                                </button>
+                                <p id="authError" class="text-red-500 text-sm mt-2"></p>
+                            </div>
 
-                                <div id="registrationForm" class="hidden">
-                                    <h3 class="text-lg font-semibold mb-2 text-blue-600">Créer un compte familial</h3>
-                                    <div class="mb-4">
-                                        <label for="familyNameInput" class="block text-gray-700 text-sm font-bold mb-2">Nom de famille</label>
-                                        <input type="text" id="familyNameInput" class="${INPUT_CLASSES}" placeholder="Ex: Famille Dupont">
-                                    </div>
-                                    <div class="mb-4">
-                                        <label for="parent1EmailInput" class="block text-gray-700 text-sm font-bold mb-2">Email Parent 1</label>
-                                        <input type="email" id="parent1EmailInput" class="${INPUT_CLASSES}" placeholder="parent1@example.com">
-                                    </div>
-                                    <div class="mb-4">
-                                        <label for="parent1PasswordInput" class="block text-gray-700 text-sm font-bold mb-2">Mot de passe Parent 1</label>
-                                        <input type="password" id="parent1PasswordInput" class="${INPUT_CLASSES}" placeholder="********">
-                                    </div>
-                                    <div class="mb-4">
-                                        <label for="parent2EmailInput" class="block text-gray-700 text-sm font-bold mb-2">Email Parent 2 (Optionnel)</label>
-                                        <input type="email" id="parent2EmailInput" class="${INPUT_CLASSES}" placeholder="parent2@example.com">
-                                    </div>
-                                    <button type="button" id="completeRegistrationButton" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded w-full mb-2">
-                                        Créer le compte familial
-                                    </button>
-                                    <button type="button" id="backToLoginButton" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded w-full">
-                                        Retour à la connexion
-                                    </button>
-                                    <p id="registrationError" class="text-red-500 text-sm mt-2"></p>
+                            <div id="registrationForm" class="hidden"> {/* Hidden by default */}
+                                <h3 class="text-lg font-semibold mb-2 text-blue-600">Créer un compte familial</h3>
+                                <div class="mb-4">
+                                    <label for="familyNameInput" class="block text-gray-700 text-sm font-bold mb-2">Nom de famille</label>
+                                    <input type="text" id="familyNameInput" class="${INPUT_CLASSES}" placeholder="Ex: Famille Dupont">
                                 </div>
+                                <div class="mb-4">
+                                    <label for="parent1EmailInput" class="block text-gray-700 text-sm font-bold mb-2">Votre Email</label>
+                                    <input type="email" id="parent1EmailInput" class="${INPUT_CLASSES}" placeholder="mon.email@example.com">
+                                </div>
+                                <div class="mb-4">
+                                    <label for="parent1PasswordInput" class="block text-gray-700 text-sm font-bold mb-2">Votre Mot de passe</label>
+                                    <input type="password" id="parent1PasswordInput" class="${INPUT_CLASSES}" placeholder="********">
+                                </div>
+                                <div class="mb-4">
+                                    <label for="parent2EmailInput" class="block text-gray-700 text-sm font-bold mb-2">Email de l'autre Parent (Optionnel, pour l'inviter)</label>
+                                    <input type="email" id="parent2EmailInput" class="${INPUT_CLASSES}" placeholder="autre.parent@example.com">
+                                </div>
+                                <button type="button" id="completeRegistrationButton" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded w-full mb-2">
+                                    Créer le compte familial
+                                </button>
+                                <button type="button" id="backToLoginButton" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded w-full">
+                                    Retour à la connexion
+                                </button>
+                                <p id="registrationError" class="text-red-500 text-sm mt-2"></p>
+                            </div>
 
-                                <div id="userDetails" class="hidden">
-                                    <h3 class="text-lg font-semibold mb-2 text-blue-600">Utilisateur connecté</h3>
-                                    <p id="userEmailDisplay" class="text-gray-700 mb-2"></p>
-                                    <button type="button" id="logoutButton" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded w-full">
-                                        Se déconnecter
-                                    </button>
-                                </div>
+                            <div id="userDetails" class="hidden"> {/* Hidden by default */}
+                                <h3 class="text-lg font-semibold mb-2 text-blue-600">Utilisateur connecté</h3>
+                                <p id="userEmailDisplay" class="text-gray-700 mb-2"></p>
+                                <button type="button" id="logoutButton" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded w-full">
+                                    Se déconnecter
+                                </button>
                             </div>
-                            <hr class="my-6">
-                            <div class="mb-4">
-                                <label for="parent1NameInput" class="block text-gray-700 text-sm font-bold mb-2">Nom Parent 1</label>
-                                <input type="text" id="parent1NameInput" class="${INPUT_CLASSES}">
-                            </div>
-                            <div class="mb-4">
-                                <label for="parent2NameInput" class="block text-gray-700 text-sm font-bold mb-2">Nom Parent 2</label>
-                                <input type="text" id="parent2NameInput" class="${INPUT_CLASSES}">
-                            </div>
-                            <button type="button" id="saveAccountSettingsButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full">
-                                Enregistrer les noms
-                            </button>
-                        </form>
+                        </div>
                     </div>
-
-                    <div class="bg-white rounded-lg shadow-md p-4">
-                        <h2 class="text-xl font-bold mb-4 text-blue-600">Préférences d'affichage</h2>
-                         <form id="displayPreferencesForm">
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-bold mb-2">
-                                    Thème
-                                </label>
-                                <div class="flex space-x-2">
-                                    <button type="button" id="themeLightButton" class="bg-white border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                        <i class="fas fa-sun mr-1"></i> Clair
-                                    </button>
-                                    <button type="button" id="themeDarkButton" class="bg-gray-800 text-white border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                        <i class="fas fa-moon mr-1"></i> Sombre
-                                    </button>
+                    
+                    <div id="mainSettingsControls" class="hidden"> {/* This new div wraps account settings form and display preferences */}
+                        <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+                             <h2 class="text-xl font-bold mb-4 text-blue-600">Paramètres du compte</h2>
+                             <form id="accountSettingsForm">
+                                <hr class="my-6">
+                                <div class="mb-4">
+                                    <label for="parent1NameInput" class="block text-gray-700 text-sm font-bold mb-2">Nom Parent 1</label>
+                                    <input type="text" id="parent1NameInput" class="${INPUT_CLASSES}">
                                 </div>
-                            </div>
-                            <div class="mb-4">
-                                <label for="defaultCalendarViewSelect" class="block text-gray-700 text-sm font-bold mb-2">
-                                    Vue du calendrier par défaut
-                                </label>
-                                <select id="defaultCalendarViewSelect" class="${INPUT_CLASSES}">
-                                    <option value="dayGridMonth">Mois</option>
-                                    <option value="timeGridWeek">Semaine</option>
-                                    <option value="listWeek">Liste Semaine</option>
-                                </select>
-                            </div>
-                             <button type="button" id="saveDisplayPreferencesButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full mt-4">
-                                Enregistrer les préférences
-                            </button>
-                        </form>
+                                <div class="mb-4">
+                                    <label for="parent2NameInput" class="block text-gray-700 text-sm font-bold mb-2">Nom Parent 2</label>
+                                    <input type="text" id="parent2NameInput" class="${INPUT_CLASSES}">
+                                </div>
+                                <button type="button" id="saveAccountSettingsButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full" disabled>
+                                    Enregistrer les noms
+                                </button>
+                            </form>
+                        </div>
+
+                        <div id="displayPreferencesCard" class="bg-white rounded-lg shadow-md p-4"> {/* ID added, hidden by default */}
+                            <h2 class="text-xl font-bold mb-4 text-blue-600">Préférences d'affichage</h2>
+                             <form id="displayPreferencesForm">
+                                <div class="mb-4">
+                                    <label class="block text-gray-700 text-sm font-bold mb-2">
+                                        Thème
+                                    </label>
+                                    <div class="flex space-x-2">
+                                        <button type="button" id="themeLightButton" class="bg-white border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            <i class="fas fa-sun mr-1"></i> Clair
+                                        </button>
+                                        <button type="button" id="themeDarkButton" class="bg-gray-800 text-white border border-gray-300 px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                            <i class="fas fa-moon mr-1"></i> Sombre
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="mb-4">
+                                    <label for="defaultCalendarViewSelect" class="block text-gray-700 text-sm font-bold mb-2">
+                                        Vue du calendrier par défaut
+                                    </label>
+                                    <select id="defaultCalendarViewSelect" class="${INPUT_CLASSES}">
+                                        <option value="dayGridMonth">Mois</option>
+                                        <option value="timeGridWeek">Semaine</option>
+                                        <option value="listWeek">Liste Semaine</option>
+                                    </select>
+                                </div>
+                                 <button type="button" id="saveDisplayPreferencesButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full mt-4" disabled>
+                                    Enregistrer les préférences
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
 
-                <div class="md:col-span-2">
-                    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
-                        <h2 class="text-xl font-bold mb-4 text-blue-600">Données et sauvegarde</h2>
-                        <p class="mb-4 text-gray-600">
-                            Les données sont sauvegardées localement sur votre appareil. Pensez à les exporter régulièrement pour éviter toute perte.
-                        </p>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <button id="exportDataButton" class="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg">
-                                <i class="fas fa-download mr-1"></i> Exporter les données (JSON)
-                            </button>
-                            <label for="importDataInput" class="bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg text-center cursor-pointer">
-                                <i class="fas fa-upload mr-1"></i> Importer des données (JSON)
-                            </label>
-                            <input type="file" id="importDataInput" class="hidden" accept=".json">
-                        </div>
-                        <button id="exportCsvButton" class="mt-4 bg-teal-500 hover:bg-teal-600 text-white w-full py-2 rounded-lg">
-                            <i class="fas fa-file-csv mr-1"></i> Exporter les Données Essentielles (CSV)
-                        </button>
-                        <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 mt-4">
-                            <p class="text-sm text-yellow-700">
-                                <i class="fas fa-exclamation-triangle mr-1"></i> L'importation de données remplacera toutes les données existantes. Assurez-vous de faire une sauvegarde avant d'importer.
+                <div class="md:col-span-2"> {/* This column's content will be wrapped for hiding */}
+                    <div id="mainSettingsDataManagementWrapper" class="hidden">
+                        <div id="dataManagementCard" class="bg-white rounded-lg shadow-md p-4 mb-6"> {/* ID added, hidden by default */}
+                            <h2 class="text-xl font-bold mb-4 text-blue-600">Données et sauvegarde</h2>
+                            <p class="mb-4 text-gray-600">
+                                Les données sont sauvegardées localement sur votre appareil. Pensez à les exporter régulièrement pour éviter toute perte.
                             </p>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <button id="exportDataButton" class="bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg" disabled>
+                                    <i class="fas fa-download mr-1"></i> Exporter les données (JSON)
+                                </button>
+                                <label for="importDataInput" id="importDataLabel" class="bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg text-center cursor-pointer">
+                                    <i class="fas fa-upload mr-1"></i> Importer des données (JSON)
+                                </label>
+                                <input type="file" id="importDataInput" class="hidden" accept=".json" disabled>
+                            </div>
+                            <button id="exportCsvButton" class="mt-4 bg-teal-500 hover:bg-teal-600 text-white w-full py-2 rounded-lg" disabled>
+                                <i class="fas fa-file-csv mr-1"></i> Exporter les Données Essentielles (CSV)
+                            </button>
+                            <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 mt-4">
+                                <p class="text-sm text-yellow-700">
+                                    <i class="fas fa-exclamation-triangle mr-1"></i> L'importation de données remplacera toutes les données existantes. Assurez-vous de faire une sauvegarde avant d'importer.
+                                </p>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="bg-white rounded-lg shadow-md p-4">
-                        <h2 class="text-xl font-bold mb-4 text-blue-600">Historique des modifications</h2>
-                        <ul id="actionHistoryList" class="space-y-3 max-h-80 overflow-y-auto">
-                           {/* Populated by JS */}
-                        </ul>
-                        <button id="clearActionHistoryButton" class="mt-4 bg-gray-500 hover:bg-gray-600 text-white w-full py-2 rounded-lg">
-                            <i class="fas fa-trash mr-1"></i> Effacer l'historique
-                        </button>
+                        <div id="historyCard" class="bg-white rounded-lg shadow-md p-4"> {/* ID added, hidden by default */}
+                            <h2 class="text-xl font-bold mb-4 text-blue-600">Historique des modifications</h2>
+                            <ul id="actionHistoryList" class="space-y-3 max-h-80 overflow-y-auto">
+                               {/* Populated by JS */}
+                            </ul>
+                            <button id="clearActionHistoryButton" class="mt-4 bg-gray-500 hover:bg-gray-600 text-white w-full py-2 rounded-lg" disabled>
+                                <i class="fas fa-trash mr-1"></i> Effacer l'historique
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -860,8 +870,7 @@
     <script src="auth.js"></script>
     <script>
         // Global variables
-        // Auth logic is in auth.js.
-        // App-specific globals remain here.
+        window.appIsReady = false; // App ready state
 
         let currentParent = 'Parent 1'; 
         let isDarkMode = false;
@@ -880,14 +889,12 @@
             dataTypes: ['custodyTime', 'transitions'] 
         };
 
-        // Data arrays - These will be primarily populated from Firestore via loadFirebaseData in auth.js
         let childrenData = []; 
         let scheduleData = []; 
         let transitionsData = []; 
         let tasksData = [];
-        let actionHistory = []; // This will also be populated from Firestore
+        let actionHistory = []; 
 
-        // Default settings structure - will be merged with Firestore settings on load
         let settingsData = {
             parent1Name: 'Parent 1',
             parent2Name: 'Parent 2',
@@ -912,7 +919,7 @@
             custodyModel: 'week-alt', 
             cycleStartDate: new Date().toISOString().split('T')[0],
             transitionLocations: [],
-            taskCategories: [ // Default categories if nothing in Firestore/localforage
+            taskCategories: [ 
                 { id: 'cat_default_medical', name: 'Médical', color: '#ef4444' }, 
                 { id: 'cat_default_school', name: 'École', color: '#f59e0b' },  
                 { id: 'cat_default_activities', name: 'Activités', color: '#8b5cf6' },
@@ -922,15 +929,14 @@
         
         window.onerror = function(message, source, lineno, colno, error) {
             console.error("Global error caught:", message, "at", source, lineno, colno, error);
-            // Optionally, display a user-friendly message here
-            // alert("Une erreur inattendue est survenue. Veuillez rafraîchir la page.");
-            return true; // Prevents default browser error handling
+            return true; 
         };
 
         const INPUT_CLASSES = "mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md p-2";
         const LABEL_CLASSES = "block text-sm font-medium text-gray-700";
 
         async function saveData(key, data) {
+            console.log("saveData triggered. Key:", key, "window.currentFamilyId:", window.currentFamilyId, "window.appIsReady:", window.appIsReady);
             const sharedDataKeysMap = {
                 'scheduleData': 'schedule',
                 'tasksData': 'tasks',
@@ -949,7 +955,7 @@
                 } else if (sharedDataKeysMap[key] && !window.currentFamilyId) {
                     console.error(`Cannot save ${key} to Firestore: currentFamilyId is not available. Data not saved to Firestore.`);
                     return; 
-                } else if (key !== 'childrenData') { // childrenData is managed by specific functions in auth.js
+                } else if (key !== 'childrenData') { 
                     console.log(`Saving ${key} to localforage.`);
                     await localforage.setItem(key, data);
                 }
@@ -1017,18 +1023,16 @@
                 updateGlobalParentNameDisplays(); 
                 populateStatsFilters();
                 renderChildrenList(); 
-                renderDashboard();    
                 
-                if(document.getElementById('stats').classList.contains('active')) { 
-                    renderStatistics(); 
-                }
+                switchTab('settings'); 
+
                 if(document.getElementById('settings').classList.contains('active')) {
                     populateAccountSettingsForm(); 
                     populateDisplayPreferencesForm(); 
                     renderActionHistory(); 
                 }
                 document.getElementById('lastUpdatedTimestamp').textContent = localStorage.getItem('lastSaveTimestamp') || 'Jamais';
-                console.log("initializeApp: Initial local/default data loaded. Firebase onAuthStateChanged will handle user-specific loading.");
+                console.log("initializeApp: Initial local/default data loaded. Firebase onAuthStateChanged will handle user-specific loading and UI updates.");
             }).catch(err => {
                 console.error("Error during initial loadSavedData.then() chain:", err);
             });
@@ -1063,12 +1067,20 @@
             console.log('Dashboard refreshed');
         }
 
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        window.switchTab = function switchTab(tabId) { 
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+                if (!tab.classList.contains('hidden')) { 
+                    tab.classList.add('hidden');
+                }
+            });
             document.querySelectorAll('.tab-button').forEach(button => button.classList.remove('active', 'bg-blue-800'));
             
             const newActiveTab = document.getElementById(tabId);
-            if (newActiveTab) newActiveTab.classList.add('active');
+            if (newActiveTab) {
+                newActiveTab.classList.add('active');
+                newActiveTab.classList.remove('hidden');
+            }
             
             const newActiveButton = document.querySelector(`.tab-button[data-tab="${tabId}"]`);
             if (newActiveButton) newActiveButton.classList.add('active', 'bg-blue-800');
@@ -1099,16 +1111,17 @@
         }
 
         function toggleParent() {
+            if (!window.appIsReady) { console.warn("App not ready, toggleParent action ignored."); alert("L'application n'est pas encore prête."); return; }
             const oldCurrentParent = document.getElementById('currentParent').textContent;
             if (oldCurrentParent === settingsData.parent1Name) {
                 currentParent = settingsData.parent2Name;
             } else if (oldCurrentParent === settingsData.parent2Name) {
                  currentParent = settingsData.parent1Name;
-            } else { // Fallback if currentParent is not one of the saved names
+            } else { 
                 currentParent = settingsData.parent1Name;
             }
             document.getElementById('currentParent').textContent = currentParent;
-            updateGlobalParentNameDisplays(); // This will ensure consistency everywhere
+            updateGlobalParentNameDisplays(); 
         }
 
         function updateGlobalParentNameDisplays() { 
@@ -1117,10 +1130,10 @@
 
             const currentParentEl = document.getElementById('currentParent');
             if (currentParentEl.textContent !== p1Name && currentParentEl.textContent !== p2Name) {
-                 currentParentEl.textContent = p1Name; // Default to P1 if current is out of sync
+                 currentParentEl.textContent = p1Name; 
                  currentParent = p1Name;
             } else {
-                 currentParent = currentParentEl.textContent; // Ensure global var is also updated
+                 currentParent = currentParentEl.textContent; 
             }
             
             document.getElementById('dashboardParent1Name').textContent = p1Name;
@@ -1180,10 +1193,11 @@
 
 
         async function toggleDarkMode() {
+            if (!window.appIsReady && window.currentFamilyId) { console.warn("App not ready, toggleDarkMode action ignored."); alert("L'application n'est pas encore prête."); return; }
             isDarkMode = !isDarkMode;
             document.body.classList.toggle('dark-mode', isDarkMode);
             settingsData.theme = isDarkMode ? 'dark' : 'light';
-            await saveData('settingsData', settingsData); // Ensure this is awaited
+            await saveData('settingsData', settingsData); 
             console.log("Theme preference saved:", settingsData.theme);
             if (settingsData.theme === 'dark') {
                 document.getElementById('themeDarkButton').classList.add('ring-2', 'ring-offset-2', 'ring-indigo-500');
@@ -1456,6 +1470,7 @@
         }
         
     async function deleteChildMedicalItem(childId, medicalItemId) {
+        if (!window.appIsReady) { console.warn("App not ready, deleteChildMedicalItem action ignored."); alert("L'application n'est pas encore prête."); return; }
         if (!Array.isArray(window.childrenData)) {
             console.error("childrenData is not loaded or not an array.");
             alert("Données des enfants non chargées. Veuillez réessayer.");
@@ -1471,13 +1486,9 @@
             if (child.medicalInfo.length < originalLength) { 
                 try {
                     await window.updateChildInFirestore(childId, child); 
-                    // No need to save actionHistory here, updateChildInFirestore should handle it or saveChildForm.
-                    // But if not, this is where you'd add it.
-                    // actionHistory.push({ timestamp: new Date().toISOString(), user: firebase.auth().currentUser?.email || 'System', action: 'Suppression Info Médicale Enfant', details: `Enfant ID: ${childId}, Info ID: ${medicalItemId}` });
-                    // await saveData('actionHistory', actionHistory);
                     if (typeof window.loadFirebaseData === 'function') {
-                        await window.loadFirebaseData(); // Reload data
-                        if (typeof showChildProfile === 'function') showChildProfile(childId); // Refresh view
+                        await window.loadFirebaseData(); 
+                        if (typeof showChildProfile === 'function') showChildProfile(childId); 
                     }
                 } catch (error) {
                     console.error("Error deleting medical item via Firestore:", error);
@@ -1518,6 +1529,7 @@
         }
 
     async function deleteChildActivityItem(childId, activityItemId) {
+        if (!window.appIsReady) { console.warn("App not ready, deleteChildActivityItem action ignored."); alert("L'application n'est pas encore prête."); return; }
         if (!Array.isArray(window.childrenData)) {
             console.error("childrenData is not loaded or not an array.");
             alert("Données des enfants non chargées. Veuillez réessayer.");
@@ -1533,8 +1545,6 @@
             if (child.activities.length < originalLength) { 
                 try {
                     await window.updateChildInFirestore(childId, child); 
-                     // actionHistory.push({ timestamp: new Date().toISOString(), user: firebase.auth().currentUser?.email || 'System', action: 'Suppression Activité Enfant', details: `Enfant ID: ${childId}, Activité ID: ${activityItemId}` });
-                    // await saveData('actionHistory', actionHistory);
                     if (typeof window.loadFirebaseData === 'function') {
                         await window.loadFirebaseData();
                         if (typeof showChildProfile === 'function') showChildProfile(childId);
@@ -1550,6 +1560,9 @@
     }
 
     async function saveChildForm() {
+        console.log("saveChildForm triggered. window.currentFamilyId:", window.currentFamilyId, "window.appIsReady:", window.appIsReady);
+        if (!window.appIsReady) { console.warn("App not ready, saveChildForm action ignored."); alert("L'application n'est pas encore prête. Veuillez patienter et réessayer."); return; }
+
         const name = document.getElementById('childNameInput').value.trim();
         if (!name) {
             alert("Le nom de l'enfant est requis.");
@@ -1596,15 +1609,14 @@
 
             if (currentlyEditingChildId) { 
                 const existingChild = window.childrenData.find(c => c.id === currentlyEditingChildId);
-                if (existingChild && existingChild.createdAt) { // Preserve original createdAt if it exists
+                if (existingChild && existingChild.createdAt) { 
                     childObject.createdAt = existingChild.createdAt; 
-                } else { // Otherwise, set it if it's an update to a doc that somehow missed it
+                } else { 
                      childObject.createdAt = firebase.firestore.FieldValue.serverTimestamp();
                 }
                 await window.updateChildInFirestore(currentlyEditingChildId, childObject);
                 actionDetail = `Profil enfant modifié: ${name}`;
             } else { 
-                // For new child, createdAt will be set by addChildToFirestore
                 const savedChild = await window.addChildToFirestore(childObject);
                 newChildId = savedChild.id; 
                 actionDetail = `Enfant ajouté: ${name}`;
@@ -1615,14 +1627,12 @@
             
             if(typeof renderActionHistory === 'function') renderActionHistory();
 
-            // Reload all Firebase data to ensure UI consistency, especially childrenData
             if (typeof window.loadFirebaseData === 'function') {
                 await window.loadFirebaseData(); 
             } else {
                 console.error("loadFirebaseData function not found on window object");
             }
             
-            // After data is reloaded, show the profile (which will use the fresh childrenData)
             if (typeof showChildProfile === 'function' && newChildId) {
                  showChildProfile(newChildId); 
             }
@@ -1888,7 +1898,6 @@
                     if (registrationForm) registrationForm.classList.add('hidden');
                     if (loginForm) loginForm.classList.remove('hidden');
                     if (registrationError) registrationError.textContent = '';
-                    // We might want to clear authError as well if switching views
                     if (authError) authError.textContent = ''; 
                 });
             }
@@ -1912,12 +1921,12 @@
             if (logoutBtn) logoutBtn.addEventListener('click', () => window.logoutUser());
         }
 
-        async function setupCalendarEventListeners() { // Made async
+        async function setupCalendarEventListeners() { 
             const applyConfigBtn = document.getElementById('applyCustodyConfigButton');
-            if (applyConfigBtn) applyConfigBtn.addEventListener('click', applyCustodyConfiguration); // applyCustodyConfiguration is async
+            if (applyConfigBtn) applyConfigBtn.addEventListener('click', applyCustodyConfiguration); 
 
             const addExceptionBtn = document.getElementById('addExceptionButton');
-            if (addExceptionBtn) addExceptionBtn.addEventListener('click', addCustodyException); // addCustodyException is async
+            if (addExceptionBtn) addExceptionBtn.addEventListener('click', addCustodyException); 
             
             const exceptionParent1Btn = document.getElementById('exceptionParent1Button');
             const exceptionParent2Btn = document.getElementById('exceptionParent2Button');
@@ -1946,12 +1955,13 @@
              console.log("Calendar configuration and exception event listeners set up.");
         }
 
-        async function setupTransitionEventListeners() { // Made async
+        async function setupTransitionEventListeners() { 
             const saveSettingsBtn = document.getElementById('saveTransitionSettingsButton');
-            if(saveSettingsBtn) saveSettingsBtn.addEventListener('click', saveTransitionSettings); // saveTransitionSettings is async
+            if(saveSettingsBtn) saveSettingsBtn.addEventListener('click', saveTransitionSettings); 
 
             const addLocationBtn = document.getElementById('addTransitionLocationButton');
-            if(addLocationBtn) addLocationBtn.addEventListener('click', async () => { // Made async
+            if(addLocationBtn) addLocationBtn.addEventListener('click', async () => { 
+                if (!window.appIsReady) { console.warn("App not ready, addTransitionLocation action ignored."); alert("L'application n'est pas encore prête."); return; }
                 const newLocName = prompt("Nom du nouveau lieu (Ex: Parc Central):");
                 if (newLocName) {
                     const newLoc = {
@@ -1962,7 +1972,7 @@
                         lng: parseFloat(prompt("Longitude (optionnel, ex: 2.350):")) || null,
                     };
                     settingsData.transitionLocations.push(newLoc);
-                    await saveData('settingsData', settingsData); // Await save
+                    await saveData('settingsData', settingsData); 
                     renderTransitionLocations();
                     refreshTransitionMap();
                     populateTransitionSettingsForm(); 
@@ -1971,7 +1981,8 @@
             });
              const addManualTransitionBtn = document.getElementById('addManualTransitionButton');
             if(addManualTransitionBtn) addManualTransitionBtn.addEventListener('click', () => {
-                alert("Ajout manuel de transition - à implémenter."); // This would need to be async if it saved data
+                 if (!window.appIsReady) { console.warn("App not ready, addManualTransition action ignored."); alert("L'application n'est pas encore prête."); return; }
+                alert("Ajout manuel de transition - à implémenter."); 
             });
         }
 
@@ -2019,10 +2030,8 @@
 
         async function loadSavedData() { 
             settingsData = await loadData('settingsData', settingsData); 
-            actionHistory = await loadData('actionHistory', []); // For logged-out state or initial load before Firestore
+            actionHistory = await loadData('actionHistory', []); 
 
-            // scheduleData, transitionsData, tasksData are primarily loaded via loadFirebaseData if logged in.
-            // Initialize them from local state or defaults if not handled by loadFirebaseData early.
             scheduleData = await loadData('scheduleData', []);
             transitionsData = await loadData('transitionsData', []);
             tasksData = await loadData('tasksData', []);
@@ -2092,7 +2101,8 @@
         }
 
 
-        async function applyCustodyConfiguration() { // Marked async
+        async function applyCustodyConfiguration() { 
+            if (!window.appIsReady) { console.warn("App not ready, applyCustodyConfiguration action ignored."); alert("L'application n'est pas encore prête."); return; }
             const model = document.getElementById('custodyModel').value;
             const startDateStr = document.getElementById('cycleStartDate').value;
             const parent1Color = document.getElementById('parent1CalendarColor').value;
@@ -2174,7 +2184,8 @@
             alert("Configuration du planning appliquée et sauvegardée !");
         }
 
-        async function addCustodyException() { // Marked async
+        async function addCustodyException() { 
+            if (!window.appIsReady) { console.warn("App not ready, addCustodyException action ignored."); alert("L'application n'est pas encore prête."); return; }
             const dateStr = document.getElementById('exceptionDate').value;
             const selectedParentName = document.getElementById('selectedExceptionParent').value;
             const reason = document.getElementById('exceptionReason').value.trim();
@@ -2235,7 +2246,8 @@
         }
 
         // --- Transitions Management Functions ---
-        async function generateTransitionsFromSchedule() { // Marked async
+        async function generateTransitionsFromSchedule() { 
+            if (!window.appIsReady && window.currentFamilyId) { console.warn("App not ready, generateTransitionsFromSchedule action ignored during potential sensitive operation."); return; }
             console.log("generateTransitionsFromSchedule: Starting.");
             if (!scheduleData || scheduleData.length === 0) {
                 transitionsData = [];
@@ -2397,7 +2409,8 @@
         }
 
 
-        async function confirmTransition(transitionId, fromDashboard = false) { // Marked async
+        async function confirmTransition(transitionId, fromDashboard = false) { 
+            if (!window.appIsReady) { console.warn("App not ready, confirmTransition action ignored."); alert("L'application n'est pas encore prête."); return; }
             const transIndex = transitionsData.findIndex(t => t.id === transitionId);
             if (transIndex > -1) {
                 transitionsData[transIndex].confirmed = true;
@@ -2410,7 +2423,8 @@
             }
         }
 
-        function editTransition(transitionId) { // Would need to be async if it saved data
+        function editTransition(transitionId) { 
+             if (!window.appIsReady) { console.warn("App not ready, editTransition action ignored."); alert("L'application n'est pas encore prête."); return; }
             alert(`Modification de la transition ID: ${transitionId} - À implémenter.`);
         }
 
@@ -2464,7 +2478,8 @@
             document.getElementById('requestConfirmTransition').checked = settingsData.notificationPreferences.requestConfirmTransition === true;
         }
 
-        async function saveTransitionSettings() { // Marked async
+        async function saveTransitionSettings() { 
+            if (!window.appIsReady) { console.warn("App not ready, saveTransitionSettings action ignored."); alert("L'application n'est pas encore prête."); return; }
             settingsData.defaultTransitionTime = document.getElementById('defaultTransitionTime').value;
             settingsData.defaultTransitionLocationId = document.getElementById('defaultTransitionLocationId').value;
             settingsData.notificationPreferences.notifyDayBefore = document.getElementById('notifyDayBefore').checked;
@@ -2481,9 +2496,9 @@
         // --- Tasks Management Functions ---
         function setupTaskEventListeners() {
             document.getElementById('showNewTaskFormButton').addEventListener('click', showNewTaskForm);
-            document.getElementById('taskForm').addEventListener('submit', saveTaskForm); // saveTaskForm is async
+            document.getElementById('taskForm').addEventListener('submit', saveTaskForm); 
             document.getElementById('cancelTaskFormButton').addEventListener('click', hideTaskForm);
-            document.getElementById('addTaskCategoryButton').addEventListener('click', addTaskCategory); // addTaskCategory is async
+            document.getElementById('addTaskCategoryButton').addEventListener('click', addTaskCategory); 
             
             const statusFilters = document.getElementById('taskStatusFilters');
             if(statusFilters) {
@@ -2570,7 +2585,8 @@
             }
         }
 
-        async function addTaskCategory() { // Marked async
+        async function addTaskCategory() { 
+            if (!window.appIsReady) { console.warn("App not ready, addTaskCategory action ignored."); alert("L'application n'est pas encore prête."); return; }
             const name = prompt("Nom de la nouvelle catégorie:");
             if (!name) return;
             const color = prompt("Couleur de la catégorie (code hexadécimal, ex: #ff0000):", "#cccccc");
@@ -2594,6 +2610,7 @@
 
 
         function showNewTaskForm() {
+             if (!window.appIsReady) { console.warn("App not ready, showNewTaskForm action ignored."); alert("L'application n'est pas encore prête."); return; }
             editingTaskId = null; 
             document.getElementById('taskForm').reset(); 
             document.getElementById('taskFormTitle').textContent = 'Nouvelle tâche';
@@ -2620,7 +2637,9 @@
             editingTaskId = null;
         }
 
-        async function saveTaskForm(event) { // Marked async
+        async function saveTaskForm(event) { 
+            console.log("saveTaskForm triggered. window.currentFamilyId:", window.currentFamilyId, "window.appIsReady:", window.appIsReady);
+            if (!window.appIsReady) { console.warn("App not ready, saveTaskForm action ignored."); alert("L'application n'est pas encore prête. Veuillez patienter et réessayer."); return; }
             event.preventDefault();
             const currentUser = document.getElementById('currentParent').textContent;
             const description = document.getElementById('taskDescriptionInput').value.trim();
@@ -2712,12 +2731,8 @@
                         <div class="text-right space-y-1">
                              <span class="text-xs px-2 py-1 rounded-full ${task.assignedParentName === settingsData.parent1Name ? 'bg-blue-100 text-blue-800' : (task.assignedParentName === settingsData.parent2Name ? 'bg-pink-100 text-pink-800' : 'bg-gray-200 text-gray-700')}">${task.assignedParentName}</span>
                             <div class="mt-2">
-                                <button onclick="toggleTaskStatus('${task.id}')" class="${task.status === 'pending' ? 'bg-green-500 hover:bg-green-600' : 'bg-yellow-500 hover:bg-yellow-600'} text-white px-2 py-1 rounded text-sm">
-                                    <i class="fas ${task.status === 'pending' ? 'fa-check' : 'fa-undo'} mr-1"></i> ${task.status === 'pending' ? 'Terminer' : 'Annuler'}
-                                </button>
-                                <button onclick="editTask('${task.id}')" class="bg-gray-500 hover:bg-gray-600 text-white px-2 py-1 rounded text-sm ml-1">
-                                    <i class="fas fa-pen"></i>
-                                </button>
+                                <button onclick="toggleTaskStatus('${task.id}')" class="${task.status === 'pending' ? 'bg-green-500 hover:bg-green-600' : 'bg-yellow-500 hover:bg-yellow-600'} text-white px-2 py-1 rounded text-sm"><i class="fas ${task.status === 'pending' ? 'fa-check' : 'fa-undo'} mr-1"></i> ${task.status === 'pending' ? 'Terminer' : 'Annuler'}</button>
+                                <button onclick="editTask('${task.id}')" class="bg-gray-500 hover:bg-gray-600 text-white px-2 py-1 rounded text-sm ml-1"><i class="fas fa-pen"></i></button>
                             </div>
                         </div>
                     </div>
@@ -2728,7 +2743,8 @@
             renderDashboardTasks();
         }
         
-        async function toggleTaskStatus(taskId) { // Marked async
+        async function toggleTaskStatus(taskId) { 
+            if (!window.appIsReady) { console.warn("App not ready, toggleTaskStatus action ignored."); alert("L'application n'est pas encore prête."); return; }
             const taskIndex = tasksData.findIndex(t => t.id === taskId);
             if (taskIndex > -1) {
                 tasksData[taskIndex].status = tasksData[taskIndex].status === 'pending' ? 'completed' : 'pending';
@@ -2740,7 +2756,8 @@
             }
         }
 
-        function editTask(taskId) { // This function itself doesn't save, saveTaskForm does.
+        function editTask(taskId) { 
+             if (!window.appIsReady) { console.warn("App not ready, editTask action ignored."); alert("L'application n'est pas encore prête."); return; }
             const task = tasksData.find(t => t.id === taskId);
             if (task) {
                 editingTaskId = taskId;
@@ -2825,13 +2842,13 @@
 
         // --- Settings Tab Functions ---
         function setupSettingsEventListeners() {
-            document.getElementById('saveAccountSettingsButton').addEventListener('click', saveAccountSettings); // saveAccountSettings is async
-            document.getElementById('themeLightButton').addEventListener('click', () => setDisplayTheme('light')); // setDisplayTheme calls saveData, which is async
-            document.getElementById('themeDarkButton').addEventListener('click', () => setDisplayTheme('dark')); // setDisplayTheme calls saveData
-            document.getElementById('saveDisplayPreferencesButton').addEventListener('click', saveDisplayPreferences); // saveDisplayPreferences is async
+            document.getElementById('saveAccountSettingsButton').addEventListener('click', saveAccountSettings); 
+            document.getElementById('themeLightButton').addEventListener('click', () => setDisplayTheme('light')); 
+            document.getElementById('themeDarkButton').addEventListener('click', () => setDisplayTheme('dark')); 
+            document.getElementById('saveDisplayPreferencesButton').addEventListener('click', saveDisplayPreferences); 
             document.getElementById('exportDataButton').addEventListener('click', exportData);
-            document.getElementById('importDataInput').addEventListener('change', importData); // importData is async
-            document.getElementById('clearActionHistoryButton').addEventListener('click', clearActionHistory); // clearActionHistory is async
+            document.getElementById('importDataInput').addEventListener('change', importData); 
+            document.getElementById('clearActionHistoryButton').addEventListener('click', clearActionHistory); 
         }
 
         function populateAccountSettingsForm() {
@@ -2839,7 +2856,8 @@
             document.getElementById('parent2NameInput').value = settingsData.parent2Name || '';
         }
         
-        async function saveAccountSettings() { // Marked async
+        async function saveAccountSettings() { 
+            if (!window.appIsReady) { console.warn("App not ready, saveAccountSettings action ignored."); alert("L'application n'est pas encore prête."); return; }
             const parent1Name = document.getElementById('parent1NameInput').value.trim();
             const parent2Name = document.getElementById('parent2NameInput').value.trim();
             const oldP1Name = settingsData.parent1Name; 
@@ -2876,7 +2894,8 @@
             }
         }
 
-        async function setDisplayTheme(theme) { // Marked async
+        async function setDisplayTheme(theme) { 
+             if (!window.appIsReady && window.currentFamilyId) { console.warn("App not ready, setDisplayTheme action ignored."); alert("L'application n'est pas encore prête."); return; }
             settingsData.theme = theme;
             isDarkMode = theme === 'dark';
             document.body.classList.toggle('dark-mode', isDarkMode);
@@ -2891,15 +2910,13 @@
                 document.getElementById('themeLightButton').classList.add('ring-2', 'ring-offset-2', 'ring-indigo-500');
                 document.getElementById('themeDarkButton').classList.remove('ring-2', 'ring-offset-2', 'ring-indigo-500');
             }
-            await saveData('settingsData', settingsData); // Save after updating theme in settingsData
+            await saveData('settingsData', settingsData); 
         }
 
-        async function saveDisplayPreferences() { // Marked async
+        async function saveDisplayPreferences() { 
+            if (!window.appIsReady) { console.warn("App not ready, saveDisplayPreferences action ignored."); alert("L'application n'est pas encore prête."); return; }
             settingsData.defaultCalendarView = document.getElementById('defaultCalendarViewSelect').value;
-            // Theme is set by setDisplayTheme, which also calls saveData.
-            // If setDisplayTheme is not called first, then theme needs to be explicitly saved here.
-            // Assuming setDisplayTheme is called to change theme, then this function just saves calendar view.
-            await saveData('settingsData', settingsData); // This will save both theme and calendar view
+            await saveData('settingsData', settingsData); 
             if (fullCalendarInstance) { 
                 fullCalendarInstance.changeView(settingsData.defaultCalendarView);
             }
@@ -2942,7 +2959,8 @@
             });
         }
 
-        async function clearActionHistory() { // Marked async
+        async function clearActionHistory() { 
+            if (!window.appIsReady) { console.warn("App not ready, clearActionHistory action ignored."); alert("L'application n'est pas encore prête."); return; }
             if (confirm("Êtes-vous sûr de vouloir effacer tout l'historique des modifications ? Cette action est irréversible.")) {
                 actionHistory = [];
                 await saveData('actionHistory', actionHistory);
@@ -3285,6 +3303,7 @@
 
 
         function exportData() { 
+            if (!window.appIsReady) { console.warn("App not ready, exportData action ignored."); alert("L'application n'est pas encore prête."); return; }
             const allData = {
                 settingsData,
                 childrenData,
@@ -3306,17 +3325,17 @@
             alert("Données exportées au format JSON!");
         }
 
-        async function importData(event) { // Marked async
+        async function importData(event) { 
+            if (!window.appIsReady) { console.warn("App not ready, importData action ignored."); alert("L'application n'est pas encore prête."); return; }
             const file = event.target.files[0];
             if (!file) return;
 
             const reader = new FileReader();
-            reader.onload = async function(e) { // Inner function also async
+            reader.onload = async function(e) { 
                 try {
                     const imported = JSON.parse(e.target.result);
                     if (confirm("Êtes-vous sûr de vouloir importer ces données ? Toutes les données actuelles seront remplacées.")) {
                         settingsData = imported.settingsData || settingsData;
-                        // childrenData is handled by Firestore direct functions, not bulk import here
                         scheduleData = imported.scheduleData || [];
                         transitionsData = imported.transitionsData || [];
                         tasksData = imported.tasksData || [];
@@ -3348,15 +3367,15 @@
             document.getElementById('exportDataButton').addEventListener('click', exportData);
             document.getElementById('importDataInput').addEventListener('change', importData);
             document.getElementById('clearActionHistoryButton').addEventListener('click', clearActionHistory);
-            document.getElementById('exportCsvButton').addEventListener('click', exportDataAsCsv); // New button listener
+            document.getElementById('exportCsvButton').addEventListener('click', exportDataAsCsv); 
         }
 
         // --- CSV Export Functions ---
         function escapeCsvValue(value) {
-            if (value == null) return ''; // Handle null or undefined by returning an empty string
+            if (value == null) return ''; 
             const stringValue = String(value);
             if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n') || stringValue.includes('\r')) {
-                return `"${stringValue.replace(/"/g, '""')}"`; // Double quotes for fields containing delimiter, quote, or newline
+                return `"${stringValue.replace(/"/g, '""')}"`; 
             }
             return stringValue;
         }
@@ -3373,7 +3392,6 @@
             
             const dataRows = dataArray.map(row => {
                 return headers.map(header => {
-                    // Handle nested properties for scheduleData.extendedProps
                     if (header === 'isException' || header === 'reason' || header === 'generated') {
                         return escapeCsvValue(row.extendedProps ? row.extendedProps[header] : '');
                     }
@@ -3405,10 +3423,10 @@
             console.log(`triggerCsvDownload: Download for ${filename} should have started.`);
         }
 
-        async function exportDataAsCsv() { // Marked async
+        async function exportDataAsCsv() { 
+            if (!window.appIsReady) { console.warn("App not ready, exportDataAsCsv action ignored."); alert("L'application n'est pas encore prête."); return; }
             console.log("exportDataAsCsv: Starting CSV export process.");
             try {
-                // 1. Children Data
                 const childrenHeaders = ['id', 'name', 'dob', 'school', 'class', 'notes', 'medicalInfo_texts', 'activity_names'];
                 const processedChildrenData = childrenData.map(child => ({
                     ...child,
@@ -3418,24 +3436,21 @@
                 const childrenCsv = convertToCSV(processedChildrenData, childrenHeaders);
                 triggerCsvDownload(childrenCsv, 'enfants_export.csv');
 
-                // 2. Schedule Data
                 const scheduleHeaders = ['id', 'title', 'start', 'end', 'color', 'allDay', 'isException', 'reason', 'generated'];
                 const scheduleCsv = convertToCSV(scheduleData, scheduleHeaders);
                 triggerCsvDownload(scheduleCsv, 'planning_export.csv');
 
-                // 3. Transitions Data
                 const transitionsHeaders = ['id', 'scheduleEventId', 'date', 'time', 'fromParent', 'toParent', 'location', 'locationId', 'confirmed', 'notes', 'autoGenerated'];
                 const transitionsCsv = convertToCSV(transitionsData, transitionsHeaders);
                 triggerCsvDownload(transitionsCsv, 'transitions_export.csv');
                 
-                // 4. Tasks Data
                 const tasksHeaders = ['id', 'description', 'details', 'assignedParentName', 'category', 'categoryId', 'dueDate', 'status', 'createdAt'];
                 const tasksCsv = convertToCSV(tasksData, tasksHeaders);
                 triggerCsvDownload(tasksCsv, 'taches_export.csv');
 
                 alert("Exportation CSV terminée. Vérifiez vos téléchargements.");
                 actionHistory.push({ timestamp: new Date().toISOString(), user: currentParent, action: 'Exportation CSV effectuée' });
-                await saveData('actionHistory', actionHistory); // Await save
+                await saveData('actionHistory', actionHistory); 
                 renderActionHistory();
             } catch (error) {
                 console.error("exportDataAsCsv: Error during CSV export process:", error);
@@ -3447,3 +3462,5 @@
     </script>
 </body>
 </html>
+
+[end of index.html]
