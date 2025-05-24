@@ -18,6 +18,30 @@ function detachFirestoreListeners() {
     firestoreListeners = []; // Reset the array
 }
 
+// Helper function to manage button states
+function setButtonsDisabledState(disabled) {
+    const buttonIds = [
+        'mainChildFormButton', 'saveTaskFormButton', 'applyCustodyConfigButton', 
+        'addExceptionButton', 'saveAccountSettingsButton', 'saveTransitionSettingsButton',
+        'saveDisplayPreferencesButton', 'addTransitionLocationButton', 'addTaskCategoryButton',
+        'clearActionHistoryButton', 'exportDataButton', 'exportCsvButton', 'applyStatsFiltersButton', 'exportStatsButton',
+        'showNewTaskFormButton' // Add this button as well
+        // Note: Buttons within dynamically generated lists (like confirmTransition) are not handled here.
+    ];
+    buttonIds.forEach(id => {
+        const button = document.getElementById(id);
+        if (button) {
+            button.disabled = disabled;
+        }
+    });
+    // Special handling for importDataInput as it's an input field
+    const importDataInput = document.getElementById('importDataInput');
+    if (importDataInput) {
+        importDataInput.disabled = disabled;
+    }
+}
+
+
 // Auth state listener
 firebase.auth().onAuthStateChanged(async (user) => {
     const loginForm = document.getElementById('loginForm');
@@ -26,6 +50,11 @@ firebase.auth().onAuthStateChanged(async (user) => {
     const userEmailDisplay = document.getElementById('userEmailDisplay');
     const authError = document.getElementById('authError');
     const registrationError = document.getElementById('registrationError'); 
+    const mainAppHeader = document.getElementById('mainAppHeader'); 
+
+    const mainTabContentIds = ['dashboard', 'calendar', 'transitions', 'children', 'tasks', 'stats'];
+    const settingsContentWrapperIds = ['mainSettingsControls', 'mainSettingsDataManagementWrapper'];
+
 
     if (typeof window.settingsData === 'undefined') {
         console.warn('settingsData not defined globally. Initializing with defaults.');
@@ -37,11 +66,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
     if (user) {
         currentUserUID = user.uid;
         if (userEmailDisplay) userEmailDisplay.textContent = `Connecté: ${user.email}`;
-        if (loginForm) loginForm.style.display = 'none';
-        if (registrationForm) registrationForm.style.display = 'none'; 
-        if (userDetails) userDetails.style.display = 'block';
-        if (authError) authError.textContent = '';
-        if (registrationError) registrationError.textContent = ''; 
+        
         console.log("User logged in (auth.js):", user.email, "UID:", user.uid);
 
         try {
@@ -51,6 +76,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
             if (userDoc.exists) {
                 const userData = userDoc.data();
                 currentFamilyId = userData.familyId; 
+                console.log("onAuthStateChanged: currentFamilyId (local var) successfully set to:", currentFamilyId, "for user:", user.email);
                 
                 if (!currentFamilyId) {
                     console.error(`User ${user.uid} (email: ${userData.email}) exists but has no familyId. Signing out.`);
@@ -60,6 +86,8 @@ firebase.auth().onAuthStateChanged(async (user) => {
                 }
                 
                 window.settingsData.familyId = currentFamilyId; 
+                console.log("onAuthStateChanged: window.settingsData.familyId set to:", window.settingsData.familyId);
+
 
                 const familySettingsDocRef = firebase.firestore().collection('families').doc(currentFamilyId).collection('settings').doc('config');
                 const familySettingsDoc = await familySettingsDocRef.get();
@@ -87,17 +115,65 @@ firebase.auth().onAuthStateChanged(async (user) => {
             return;
         }
         
-        if (typeof window.updateGlobalParentNameDisplays === 'function') window.updateGlobalParentNameDisplays();
         if (typeof window.loadFirebaseData === 'function') await window.loadFirebaseData();
+        if (typeof window.updateGlobalParentNameDisplays === 'function') window.updateGlobalParentNameDisplays();
+
+        if (mainAppHeader) mainAppHeader.classList.remove('hidden');
+
+        mainTabContentIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.remove('hidden');
+        });
+        settingsContentWrapperIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.remove('hidden');
+        });
+        
+        if (loginForm) loginForm.classList.add('hidden');
+        if (registrationForm) registrationForm.classList.add('hidden');
+        if (userDetails) userDetails.classList.remove('hidden');
+        if (authError) authError.textContent = '';
+        if (registrationError) registrationError.textContent = '';
+
+        console.log("onAuthStateChanged: User login processing complete. UI visible. appIsReady will be set to true next.");
+        window.appIsReady = true;
+        console.log("onAuthStateChanged: appIsReady set to true. currentFamilyId (local var):", currentFamilyId, "window.settingsData.familyId:", window.settingsData.familyId);
+        setButtonsDisabledState(false); // Enable buttons
+
+        if (typeof window.switchTab === 'function') {
+            window.switchTab('dashboard');
+        } else {
+            console.error("switchTab function is not defined on window object.");
+        }
+
 
     } else { // User logged out
+        window.appIsReady = false;
+        console.log("onAuthStateChanged: User logged out. appIsReady set to false.");
+        setButtonsDisabledState(true); // Disable buttons
+
         detachFirestoreListeners(); 
         currentUserUID = null;
         currentFamilyId = null;
+
+        if (mainAppHeader) mainAppHeader.classList.add('hidden');
+
+        mainTabContentIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.classList.add('hidden');
+                el.classList.remove('active'); 
+            }
+        });
+        settingsContentWrapperIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.add('hidden');
+        });
+
         if (userEmailDisplay) userEmailDisplay.textContent = '';
-        if (loginForm) loginForm.style.display = 'block'; 
-        if (registrationForm) registrationForm.style.display = 'none'; 
-        if (userDetails) userDetails.style.display = 'none';
+        if (loginForm) loginForm.classList.remove('hidden'); 
+        if (registrationForm) registrationForm.classList.add('hidden'); 
+        if (userDetails) userDetails.classList.add('hidden');
         
         if (typeof window.settingsData !== 'undefined') {
             const currentTheme = window.settingsData.theme; 
@@ -120,10 +196,16 @@ firebase.auth().onAuthStateChanged(async (user) => {
         window.childrenData = []; window.scheduleData = []; window.transitionsData = []; window.tasksData = []; window.actionHistory = [];
 
         if (typeof window.updateGlobalParentNameDisplays === 'function') window.updateGlobalParentNameDisplays();
-        if (typeof window.renderDashboard === 'function') window.renderDashboard();
-        if (typeof window.refreshCalendars === 'function') window.refreshCalendars();
-        if (typeof window.renderTasks === 'function') window.renderTasks(typeof window.currentTaskFilter !== 'undefined' ? window.currentTaskFilter : { status: 'all', categoryId: 'all' });
-        console.log("User logged out (auth.js). Listeners detached. App data reset to defaults.");
+        if (typeof window.renderDashboard === 'function') window.renderDashboard(); 
+        if (typeof window.refreshCalendars === 'function') window.refreshCalendars(); 
+        if (typeof window.renderTasks === 'function') window.renderTasks(typeof window.currentTaskFilter !== 'undefined' ? window.currentTaskFilter : { status: 'all', categoryId: 'all' }); 
+        
+        if (typeof window.switchTab === 'function') {
+            window.switchTab('settings');
+        } else {
+            console.error("switchTab function is not defined on window object during logout.");
+        }
+        console.log("User logged out (auth.js). Listeners detached. App data reset. UI reset for logged-out state.");
     }
 });
 
@@ -137,7 +219,6 @@ async function registerFamilyAccount() {
     const familyName = familyNameInput ? familyNameInput.value.trim() : '';
     const emailForRegistration = p1EmailInput ? p1EmailInput.value.trim() : ''; 
     const passwordForRegistration = p1PasswordInput ? p1PasswordInput.value : '';
-    // Ensure otherParentEmailForInvite is null if the input is empty, not just an empty string
     const otherParentEmailForInvite = p2EmailFormInput && p2EmailFormInput.value.trim() !== '' ? p2EmailFormInput.value.trim() : null;
 
     if (registrationError) registrationError.textContent = '';
@@ -152,7 +233,7 @@ async function registerFamilyAccount() {
     }
 
     const db = firebase.firestore();
-    let newAuthUID; // Stores UID of the newly created auth user (P1 or P2)
+    let newAuthUID; 
 
     try {
         const familiesRef = db.collection('families');
@@ -172,7 +253,7 @@ async function registerFamilyAccount() {
             if (registrationError) registrationError.textContent = `Liaison au compte familial de ${familyData.parent1Email}...`;
 
             const p2UserCredential = await firebase.auth().createUserWithEmailAndPassword(emailForRegistration, passwordForRegistration);
-            newAuthUID = p2UserCredential.user.uid; // Store P2's UID
+            newAuthUID = p2UserCredential.user.uid; 
             console.log("Parent 2 Auth user created:", newAuthUID);
 
             const batch = db.batch();
@@ -191,8 +272,6 @@ async function registerFamilyAccount() {
             }
             await batch.commit();
             console.log(`Parent 2 (${emailForRegistration}) successfully linked to family ${familyIdToLink}.`);
-            if (document.getElementById('registrationForm')) document.getElementById('registrationForm').style.display = 'none';
-            if (document.getElementById('loginForm')) document.getElementById('loginForm').style.display = 'none';
             return; 
         }
 
@@ -209,7 +288,7 @@ async function registerFamilyAccount() {
         if (registrationError) registrationError.textContent = `Création du compte familial ${familyName}...`;
 
         const userCredential = await firebase.auth().createUserWithEmailAndPassword(emailForRegistration, passwordForRegistration);
-        newAuthUID = userCredential.user.uid; // Store P1's UID
+        newAuthUID = userCredential.user.uid; 
         console.log("Parent 1 Auth user created for new family:", newAuthUID);
 
         const batch = db.batch();
@@ -220,7 +299,7 @@ async function registerFamilyAccount() {
             name: familyName,
             parent1UID: newAuthUID,
             parent1Email: emailForRegistration,
-            parent2Email: otherParentEmailForInvite, // Already null if empty
+            parent2Email: otherParentEmailForInvite, 
             parent2UID: null, 
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
@@ -239,7 +318,7 @@ async function registerFamilyAccount() {
             parent1Name: emailForRegistration.split('@')[0],
             parent2Name: (otherParentEmailForInvite ? otherParentEmailForInvite.split('@')[0] : 'Parent 2 (Invitez)'),
             parent1Email: emailForRegistration,
-            parent2Email: otherParentEmailForInvite, // Already null if empty
+            parent2Email: otherParentEmailForInvite, 
             custodyModel: 'week-alt',
             cycleStartDate: new Date().toISOString().split('T')[0],
             parentsColors: { parent1: '#4299e1', parent2: '#ed64a6' },
@@ -267,17 +346,13 @@ async function registerFamilyAccount() {
 
         await batch.commit();
         console.log("New family registration successful. Batch committed.");
-        if (document.getElementById('registrationForm')) document.getElementById('registrationForm').style.display = 'none';
-        if (document.getElementById('loginForm')) document.getElementById('loginForm').style.display = 'none';
 
     } catch (error) {
         if (registrationError) registrationError.textContent = error.message;
         console.error("Family Registration error (auth.js):", error);
 
-        // Attempt to delete the created Auth user if Firestore operations fail and the user is still the one just created.
         const createdUser = firebase.auth().currentUser;
         if (newAuthUID && createdUser && createdUser.uid === newAuthUID) {
-            // Ensure we are deleting the user that was just (likely) created in this failed attempt.
              if (createdUser.email === emailForRegistration) { 
                 try {
                     await createdUser.delete();
@@ -287,10 +362,10 @@ async function registerFamilyAccount() {
                     if (registrationError) registrationError.textContent += " Erreur de nettoyage du compte Auth.";
                 }
             } else {
-                 console.warn("Skipping auth user deletion: Current user's email does not match the email used in this registration attempt. This might indicate a concurrent login or an unexpected state.");
+                 console.warn("Skipping auth user deletion: Current user's email does not match the email used in this registration attempt.");
             }
         } else if (newAuthUID && !createdUser) {
-             console.warn("Skipping auth user deletion: No current user found, though an Auth UID was generated in this failed attempt. This is an unexpected state.");
+             console.warn("Skipping auth user deletion: No current user found, though an Auth UID was generated in this failed attempt.");
         }
     }
 }
@@ -336,7 +411,6 @@ async function loadFirebaseData() {
     if (!currentUserUID || !currentFamilyId) {
         console.log("loadFirebaseData: No user or familyId, skipping Firestore load. Clearing local data.");
         window.childrenData = []; window.scheduleData = []; window.transitionsData = []; window.tasksData = []; window.actionHistory = [];
-        if (typeof window.renderAllComponents === 'function') window.renderAllComponents(); else console.warn("renderAllComponents not defined, individual renderers will be called by onAuthStateChanged if implemented.");
         return;
     }
 
@@ -357,18 +431,13 @@ async function loadFirebaseData() {
                     if (typeof window.populateDisplayPreferencesForm === 'function') window.populateDisplayPreferencesForm();
                     if (typeof window.refreshCalendars === 'function') window.refreshCalendars(); 
                     
-                    // Theme update logic
                     const bodyHasDarkMode = document.body.classList.contains('dark-mode');
                     const settingsIndicateDark = window.settingsData.theme === 'dark';
                     if (bodyHasDarkMode !== settingsIndicateDark) {
-                        if (typeof window.toggleDarkMode === 'function') { // Assuming toggleDarkMode handles UI and settingsData.theme
-                           // If toggleDarkMode also saves, it might be better to have a theme applicator that doesn't save.
-                           // For now, let's assume setDisplayTheme is the preferred method if available.
-                           if(typeof window.setDisplayTheme === 'function'){
-                               window.setDisplayTheme(window.settingsData.theme, false); // false to prevent re-saving
-                           } else {
-                               window.toggleDarkMode(); // This might re-save; review toggleDarkMode
-                           }
+                        if (typeof window.setDisplayTheme === 'function') {
+                            window.setDisplayTheme(window.settingsData.theme, false); 
+                        } else if (typeof window.toggleDarkMode === 'function') {
+                            window.toggleDarkMode(); 
                         }
                     }
                 } else {
@@ -465,3 +534,5 @@ window.addChildToFirestore = addChildToFirestore;
 window.updateChildInFirestore = updateChildInFirestore;
 window.deleteChildFromFirestore = deleteChildFromFirestore;
 window.detachFirestoreListeners = detachFirestoreListeners;
+
+[end of auth.js]
