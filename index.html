@@ -12,6 +12,9 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -193,7 +196,7 @@
                         </div>
                     </div>
 
-                    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+                    <div class="bg-white rounded-lg shadow-md p-4 mb-6" style="height:42rem;">
                         <div class="flex justify-between items-center mb-4">
                             <h2 class="text-xl font-bold text-blue-600">Calendrier de garde</h2>
                             <button onclick="switchTab('calendar')" class="text-blue-500 hover:underline text-sm">
@@ -246,7 +249,7 @@
         <section id="calendar" class="tab-content">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div class="md:col-span-3">
-                    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+                    <div class="bg-white rounded-lg shadow-md p-4 mb-6" style="height:42rem;">
                         <h2 class="text-xl font-bold mb-4 text-blue-600">Calendrier de garde</h2>
                         <div id="fullCalendar" class="h-96"></div>
                     </div>
@@ -680,6 +683,34 @@
                     <div class="bg-white rounded-lg shadow-md p-4 mb-6">
                         <h2 class="text-xl font-bold mb-4 text-blue-600">Paramètres du compte</h2>
                         <form id="accountSettingsForm">
+                            <div id="authContainer">
+                                <div id="loginForm">
+                                    <h3 class="text-lg font-semibold mb-2 text-blue-600">Connexion</h3>
+                                    <div class="mb-4">
+                                        <label for="emailInput" class="block text-gray-700 text-sm font-bold mb-2">Email</label>
+                                        <input type="email" id="emailInput" class="${INPUT_CLASSES}" placeholder="email@example.com">
+                                    </div>
+                                    <div class="mb-4">
+                                        <label for="passwordInput" class="block text-gray-700 text-sm font-bold mb-2">Mot de passe</label>
+                                        <input type="password" id="passwordInput" class="${INPUT_CLASSES}" placeholder="********">
+                                    </div>
+                                    <button type="button" id="loginButton" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded w-full mb-2">
+                                        Se connecter
+                                    </button>
+                                    <button type="button" id="registerButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full">
+                                        S'inscrire (Nouveau compte)
+                                    </button>
+                                    <p id="authError" class="text-red-500 text-sm mt-2"></p>
+                                </div>
+                                <div id="userDetails" class="hidden">
+                                    <h3 class="text-lg font-semibold mb-2 text-blue-600">Utilisateur connecté</h3>
+                                    <p id="userEmailDisplay" class="text-gray-700 mb-2"></p>
+                                    <button type="button" id="logoutButton" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded w-full">
+                                        Se déconnecter
+                                    </button>
+                                </div>
+                            </div>
+                            <hr class="my-6">
                             <div class="mb-4">
                                 <label for="parent1NameInput" class="block text-gray-700 text-sm font-bold mb-2">Nom Parent 1</label>
                                 <input type="text" id="parent1NameInput" class="${INPUT_CLASSES}">
@@ -687,15 +718,6 @@
                             <div class="mb-4">
                                 <label for="parent2NameInput" class="block text-gray-700 text-sm font-bold mb-2">Nom Parent 2</label>
                                 <input type="text" id="parent2NameInput" class="${INPUT_CLASSES}">
-                            </div>
-                             <!-- Email and password fields are informational for now -->
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-bold mb-2">Adresse e-mail (Parent 1)</label>
-                                <input type="email" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="parent1@example.com" disabled>
-                            </div>
-                            <div class="mb-4">
-                                <label class="block text-gray-700 text-sm font-bold mb-2">Mot de passe</label>
-                                <input type="password" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" value="••••••••" disabled>
                             </div>
                             <button type="button" id="saveAccountSettingsButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full">
                                 Enregistrer les noms
@@ -791,7 +813,29 @@
     </footer>
 
     <script>
+      // Your web app's Firebase configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyBB-xtM869XDak8ckEzRQAqdEJ7yEOr5f4",
+        authDomain: "gardealterne-b6b17.firebaseapp.com",
+        projectId: "gardealterne-b6b17",
+        storageBucket: "gardealterne-b6b17.firebasestorage.app",
+        messagingSenderId: "275193359676",
+        appId: "1:275193359676:web:1eb29392463a519ea00239"
+      };
+
+      // Initialize Firebase
+      firebase.initializeApp(firebaseConfig);
+      const auth = firebase.auth(); // auth is now globally available from Firebase SDK
+      const db = firebase.firestore(); // db is now globally available from Firebase SDK
+      console.log("Firebase initialized.");
+    </script>
+    <script src="auth.js"></script>
+    <script>
         // Global variables
+        // Auth logic (currentUserUID, onAuthStateChanged, registerUser, loginUser, logoutUser, loadFirebaseData)
+        // is now in auth.js.
+        // The settingsData variable and other app-specific globals remain here.
+
         let currentParent = 'Parent 1'; 
         let isDarkMode = false;
         let currentlyEditingChildId = null; 
@@ -810,16 +854,14 @@
         };
 
 
-        let childrenData = [];
+        let childrenData = []; // This will now be populated from Firestore via auth.js
         let scheduleData = []; 
         let transitionsData = []; 
         let tasksData = [];
         // Add a global error handler
         window.onerror = function(message, source, lineno, colno, error) {
             console.error("Global error caught:", message, "at", source, lineno, colno, error);
-            // Optionally, display a message to the user
-            // alert("Une erreur critique est survenue. Veuillez vérifier la console.");
-            return true; // Prevents default error handling
+            return true; 
         };
 
         let settingsData = {
@@ -827,6 +869,7 @@
             parent2Name: 'Parent 2',
             parent1Email: '', 
             parent2Email: '', 
+            familyId: null, 
             defaultTransitionTime: '18:00',
             defaultTransitionLocationId: null, 
             notificationPreferences: {
@@ -855,10 +898,16 @@
 
         async function saveData(key, data) {
             try {
-                await localforage.setItem(key, data);
+                // For settingsData, if a familyId exists, save to Firestore instead of localforage
+                if (key === 'settingsData' && window.currentFamilyId) {
+                    console.log(`Saving settingsData to Firestore for family ${window.currentFamilyId}`);
+                    await firebase.firestore().collection('families').doc(window.currentFamilyId).collection('settings').doc('config').set(data, { merge: true });
+                } else if (key !== 'childrenData') { // Do not save childrenData to localforage
+                    await localforage.setItem(key, data);
+                }
                 console.log(`SUCCESS: Data saved for key: ${key}`, data);
                  document.getElementById('lastUpdatedTimestamp').textContent = new Date().toLocaleString('fr-FR');
-                 localStorage.setItem('lastSaveTimestamp', new Date().toLocaleString('fr-FR')); // Persist for next session
+                 localStorage.setItem('lastSaveTimestamp', new Date().toLocaleString('fr-FR'));
             } catch (err) {
                 console.error(`FAILURE: Error saving data for key ${key}:`, err);
                 alert(`Failed to save data for ${key}. Check console.`);
@@ -867,42 +916,42 @@
 
         async function loadData(key, defaultValue = []) {
             try {
+                // Children data is loaded from Firestore by auth.js
+                if (key === 'childrenData') {
+                    console.log("INFO: childrenData is managed by Firestore, not loaded from localforage by this function.");
+                    return window.childrenData || []; // Return global childrenData or empty if not yet loaded
+                }
+
                 const value = await localforage.getItem(key);
                 if (value !== null) {
-                    console.log(`SUCCESS: Data loaded for key: ${key}`, value);
+                    console.log(`SUCCESS: Data loaded for key: ${key} from localforage`, value);
                 } else {
-                    console.log(`INFO: No data found for key: ${key}, using default value.`, defaultValue);
+                    console.log(`INFO: No data found for key: ${key} in localforage, using default value.`, defaultValue);
                 }
-                if (value === null && key === 'settingsData') { 
-                     console.log(`No settings found, using default settings for key: ${key}`);
+                 if (value === null && key === 'settingsData') { 
+                     console.log(`No settings found in localforage, using default settings for key: ${key}`);
                      const defaultSettings = JSON.parse(JSON.stringify(defaultValue));
-                     if (!Array.isArray(defaultSettings.taskCategories)) {
-                         defaultSettings.taskCategories = [];
-                     }
-                      if (!Array.isArray(defaultSettings.transitionLocations)) {
-                        defaultSettings.transitionLocations = [];
-                    }
+                     if (!Array.isArray(defaultSettings.taskCategories)) defaultSettings.taskCategories = [];
+                     if (!Array.isArray(defaultSettings.transitionLocations)) defaultSettings.transitionLocations = [];
                      return defaultSettings;
                 }
                 if (value === null) {
-                    if ( (key === 'childrenData' || key === 'scheduleData' || key === 'transitionsData' || key === 'actionHistory' || key === 'tasksData') && Array.isArray(defaultValue) && defaultValue.length === 0) { 
+                    // For childrenData, this localforage load will be superseded by Firestore if logged in.
+                    // For other arrays, it provides an empty default if nothing in localforage.
+                    if ( (key === 'scheduleData' || key === 'transitionsData' || key === 'actionHistory' || key === 'tasksData') && Array.isArray(defaultValue) && defaultValue.length === 0) { 
                         return [];
                     }
-                    console.log(`INFO: No data found for key: ${key}, using default value.`);
                     return defaultValue;
                 }
-                // console.log(`Data loaded for key: ${key}`); // Redundant with the one above
                 if (key === 'settingsData' && value && !Array.isArray(value.taskCategories)) {
-                    console.warn(`Loaded settingsData for ${key} had non-array taskCategories. Initializing to [].`);
                     value.taskCategories = [];
                 }
                 if (key === 'settingsData' && value && !Array.isArray(value.transitionLocations)) {
-                    console.warn(`Loaded settingsData for ${key} had non-array transitionLocations. Initializing to [].`);
                     value.transitionLocations = [];
                 }
                 return value;
             } catch (err) {
-                console.error(`FAILURE: Error loading data for key ${key}:`, err);
+                console.error(`FAILURE: Error loading data for key ${key} from localforage:`, err);
                 alert(`Failed to load data for ${key}. Check console.`);
                 return defaultValue; 
             }
@@ -924,25 +973,25 @@
             setupStatsEventListeners(); 
 
             loadSavedData().then(() => {
-                updateGlobalParentNameDisplays(); // Ensure names are set everywhere after load
+                updateGlobalParentNameDisplays(); 
                 populateStatsFilters();
-                renderChildrenList(); // Ensure children list is rendered for its tab
-                renderDashboard(); 
-                 if(document.getElementById('stats').classList.contains('active')) { 
-                    renderStatistics();
+                renderChildrenList(); 
+                renderDashboard();    
+                
+                if(document.getElementById('stats').classList.contains('active')) { 
+                    renderStatistics(); 
                 }
                 if(document.getElementById('settings').classList.contains('active')) {
-                    populateAccountSettingsForm();
-                    populateDisplayPreferencesForm();
-                    renderActionHistory();
+                    populateAccountSettingsForm(); 
+                    populateDisplayPreferencesForm(); 
+                    renderActionHistory(); 
                 }
                 document.getElementById('lastUpdatedTimestamp').textContent = localStorage.getItem('lastSaveTimestamp') || 'Jamais';
-                console.log("initializeApp: Initial data loaded and rendering triggered.");
+                console.log("initializeApp: Initial local/default data loaded. Firebase onAuthStateChanged will handle user-specific loading.");
             }).catch(err => {
-                console.error("Error during loadSavedData.then() chain:", err);
+                console.error("Error during initial loadSavedData.then() chain:", err);
             });
 
-            // Ensure core button listeners are robustly set
             const mainTabs = document.getElementById('mainTabs');
             if (mainTabs) {
                 mainTabs.addEventListener('click', function(event) {
@@ -951,7 +1000,6 @@
                         switchTab(button.dataset.tab);
                     }
                 });
-                console.log("initializeApp: Main tabs event listener attached.");
             } else {
                 console.error("initializeApp: Main tabs element not found!");
             }
@@ -959,9 +1007,7 @@
             const parentToggleButton = document.querySelector('button[onclick="toggleParent()"]');
             if (parentToggleButton) {
                 parentToggleButton.addEventListener('click', toggleParent);
-                 // Remove onclick to avoid double call if it was already there
                 parentToggleButton.removeAttribute('onclick');
-                console.log("initializeApp: Parent toggle button event listener attached.");
             } else {
                  console.error("initializeApp: Parent toggle button not found!");
             }
@@ -1084,11 +1130,10 @@
             if(exceptionParent1Btn) exceptionParent1Btn.textContent = p1Name;
             if(exceptionParent2Btn) exceptionParent2Btn.textContent = p2Name;
             
-            // Re-render dynamic content that might include parent names
             refreshCalendars(); 
             renderTransitions(); 
             renderTasks(currentTaskFilter); 
-            renderDashboard(); // To update dashboard items that might use parent names in titles
+            renderDashboard(); 
             console.log("Global parent name displays updated.");
         }
 
@@ -1097,10 +1142,8 @@
             isDarkMode = !isDarkMode;
             document.body.classList.toggle('dark-mode', isDarkMode);
             settingsData.theme = isDarkMode ? 'dark' : 'light';
-            // Save theme preference directly
             saveData('settingsData', settingsData).then(() => {
                  console.log("Theme preference saved:", settingsData.theme);
-                 // Update theme button active state
                 if (settingsData.theme === 'dark') {
                     document.getElementById('themeDarkButton').classList.add('ring-2', 'ring-offset-2', 'ring-indigo-500');
                     document.getElementById('themeLightButton').classList.remove('ring-2', 'ring-offset-2', 'ring-indigo-500');
@@ -1372,20 +1415,39 @@
             }
         }
         
-        async function deleteChildMedicalItem(childId, medicalItemId) {
-            const childIndex = childrenData.findIndex(c => c.id === childId);
-            if (childIndex > -1) {
-                childrenData[childIndex].medicalInfo = childrenData[childIndex].medicalInfo || [];
-                const medicalInfoIndex = childrenData[childIndex].medicalInfo.findIndex(m => m.id === medicalItemId);
-                if (medicalInfoIndex > -1) {
-                    const removedItem = childrenData[childIndex].medicalInfo.splice(medicalInfoIndex, 1);
-                    await saveData('childrenData', childrenData);
-                    showChildProfile(childId); 
-                    actionHistory.push({ timestamp: new Date().toISOString(), user: document.getElementById('currentParent').textContent, action: 'Suppression info médicale', details: `Enfant: ${childrenData[childIndex].name}, Info: ${removedItem[0].text}` });
-                    await saveData('actionHistory', actionHistory);
+    async function deleteChildMedicalItem(childId, medicalItemId) {
+        if (!Array.isArray(window.childrenData)) {
+            console.error("childrenData is not loaded or not an array.");
+            alert("Données des enfants non chargées. Veuillez réessayer.");
+            return;
+        }
+        const childIndex = window.childrenData.findIndex(c => c.id === childId);
+        if (childIndex > -1) {
+            const child = { ...window.childrenData[childIndex] }; 
+            child.medicalInfo = child.medicalInfo || [];
+            const originalLength = child.medicalInfo.length;
+            child.medicalInfo = child.medicalInfo.filter(m => m.id !== medicalItemId);
+
+            if (child.medicalInfo.length < originalLength) { 
+                try {
+                    await window.updateChildInFirestore(childId, child); 
+                    if (typeof window.loadFirebaseData === 'function') {
+                        await window.loadFirebaseData();
+                        if (typeof showChildProfile === 'function') showChildProfile(childId);
+                    } else {
+                         console.error("loadFirebaseData function not found on window object");
+                         window.childrenData[childIndex] = child;
+                         if (typeof showChildProfile === 'function') showChildProfile(childId);
+                    }
+                } catch (error) {
+                    console.error("Error deleting medical item via Firestore:", error);
+                    alert("Erreur suppression info médicale: " + error.message);
                 }
             }
+        } else {
+            console.error("Child not found for medical item deletion:", childId);
         }
+    }
 
         function addActivityToForm() {
             const container = document.getElementById('childActivitiesFormAreaRenderedList');
@@ -1415,87 +1477,118 @@
             }
         }
 
-        async function deleteChildActivityItem(childId, activityItemId) {
-            const childIndex = childrenData.findIndex(c => c.id === childId);
-            if (childIndex > -1) {
-                childrenData[childIndex].activities = childrenData[childIndex].activities || [];
-                const activityIndex = childrenData[childIndex].activities.findIndex(a => a.id === activityItemId);
-                if (activityIndex > -1) {
-                    const removedItem = childrenData[childIndex].activities.splice(activityIndex, 1);
-                    await saveData('childrenData', childrenData);
-                    showChildProfile(childId);
-                    actionHistory.push({ timestamp: new Date().toISOString(), user: document.getElementById('currentParent').textContent, action: 'Suppression activité', details: `Enfant: ${childrenData[childIndex].name}, Activité: ${removedItem[0].name}` });
-                    await saveData('actionHistory', actionHistory);
-                }
-            }
+    async function deleteChildActivityItem(childId, activityItemId) {
+        if (!Array.isArray(window.childrenData)) {
+            console.error("childrenData is not loaded or not an array.");
+            alert("Données des enfants non chargées. Veuillez réessayer.");
+            return;
         }
+        const childIndex = window.childrenData.findIndex(c => c.id === childId);
+        if (childIndex > -1) {
+            const child = { ...window.childrenData[childIndex] }; 
+            child.activities = child.activities || [];
+            const originalLength = child.activities.length;
+            child.activities = child.activities.filter(a => a.id !== activityItemId);
 
-
-        async function saveChildForm() {
-            const name = document.getElementById('childNameInput').value.trim();
-            if (!name) {
-                alert("Le nom de l'enfant est requis.");
-                return;
+            if (child.activities.length < originalLength) { 
+                try {
+                    await window.updateChildInFirestore(childId, child); 
+                    if (typeof window.loadFirebaseData === 'function') {
+                        await window.loadFirebaseData();
+                        if (typeof showChildProfile === 'function') showChildProfile(childId);
+                    } else {
+                        console.error("loadFirebaseData function not found on window object");
+                        window.childrenData[childIndex] = child;
+                        if (typeof showChildProfile === 'function') showChildProfile(childId);
+                    }
+                } catch (error) {
+                    console.error("Error deleting activity item via Firestore:", error);
+                    alert("Erreur suppression activité: " + error.message);
+                }
             }
-            const dob = document.getElementById('childDobInput').value;
-            const school = document.getElementById('childSchoolInput').value.trim();
-            const childClassValue = document.getElementById('childClassInput').value.trim();
-            const notes = document.getElementById('childNotesInput').value.trim();
-            const currentUser = document.getElementById('currentParent').textContent || 'Utilisateur inconnu';
-            let savedChildId = currentlyEditingChildId;
+        } else {
+            console.error("Child not found for activity item deletion:", childId);
+        }
+    }
 
-            const medicalInfoItems = [];
-            const medicalFormGroups = document.querySelectorAll('#childMedicalFormAreaRenderedList .medical-item-form-group');
-            medicalFormGroups.forEach(group => {
-                const text = group.querySelector('.medical-info-text').value.trim();
-                const type = group.querySelector('.medical-info-type').value;
-                const existingId = group.dataset.id.startsWith('temp-med-') ? null : group.dataset.id;
-                if (text) { 
-                    medicalInfoItems.push({ id: existingId || `med-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`, text, type });
-                }
-            });
-            
-            const activitiesItems = [];
-            const activityFormGroups = document.querySelectorAll('#childActivitiesFormAreaRenderedList .activity-item-form-group');
-            activityFormGroups.forEach(group => {
-                const actName = group.querySelector('.activity-info-name').value.trim();
-                const schedule = group.querySelector('.activity-info-schedule').value.trim();
-                const location = group.querySelector('.activity-info-location').value.trim();
-                const existingId = group.dataset.id.startsWith('temp-act-') ? null : group.dataset.id;
-                if (actName) { 
-                    activitiesItems.push({ id: existingId || `act-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`, name: actName, schedule, location });
-                }
-            });
+    async function saveChildForm() {
+        const name = document.getElementById('childNameInput').value.trim();
+        if (!name) {
+            alert("Le nom de l'enfant est requis.");
+            return;
+        }
+        const dob = document.getElementById('childDobInput').value;
+        const school = document.getElementById('childSchoolInput').value.trim();
+        const childClassValue = document.getElementById('childClassInput').value.trim();
+        const notes = document.getElementById('childNotesInput').value.trim();
+        const currentUserForHistory = document.getElementById('currentParent').textContent || (firebase.auth().currentUser ? firebase.auth().currentUser.email : 'Utilisateur inconnu');
 
-            if (currentlyEditingChildId === null) { 
-                const newChild = {
-                    id: Date.now().toString(), name, dob, school, class: childClassValue, 
-                    medicalInfo: medicalInfoItems, activities: activitiesItems, notes
-                };
-                childrenData.push(newChild);
-                actionHistory.push({ timestamp: new Date().toISOString(), user: currentUser, action: 'Ajout enfant', details: newChild.name });
-                savedChildId = newChild.id; 
+        const medicalInfoItems = [];
+        const medicalFormGroups = document.querySelectorAll('#childMedicalFormAreaRenderedList .medical-item-form-group');
+        medicalFormGroups.forEach(group => {
+            const text = group.querySelector('.medical-info-text').value.trim();
+            const type = group.querySelector('.medical-info-type').value;
+            const existingId = group.dataset.id && !group.dataset.id.startsWith('temp-med-') ? group.dataset.id : null;
+            if (text) {
+                medicalInfoItems.push({ id: existingId || `med-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`, text, type });
+            }
+        });
+        
+        const activitiesItems = [];
+        const activityFormGroups = document.querySelectorAll('#childActivitiesFormAreaRenderedList .activity-item-form-group');
+        activityFormGroups.forEach(group => {
+            const actName = group.querySelector('.activity-info-name').value.trim();
+            const schedule = group.querySelector('.activity-info-schedule').value.trim();
+            const location = group.querySelector('.activity-info-location').value.trim();
+            const existingId = group.dataset.id && !group.dataset.id.startsWith('temp-act-') ? group.dataset.id : null;
+            if (actName) {
+                activitiesItems.push({ id: existingId || `act-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`, name: actName, schedule, location });
+            }
+        });
+
+        const childObject = {
+            name, dob, school, class: childClassValue, notes,
+            medicalInfo: medicalInfoItems,
+            activities: activitiesItems
+            // createdAt and updatedAt will be handled by Firestore functions in auth.js
+        };
+
+        try {
+            let actionDetail = "";
+            let newChildId = currentlyEditingChildId;
+
+            if (currentlyEditingChildId) { 
+                const existingChild = window.childrenData.find(c => c.id === currentlyEditingChildId);
+                if (existingChild && existingChild.createdAt) {
+                    childObject.createdAt = existingChild.createdAt; 
+                }
+                await window.updateChildInFirestore(currentlyEditingChildId, childObject);
+                actionDetail = `Profil enfant modifié: ${name}`;
             } else { 
-                const childIndex = childrenData.findIndex(c => c.id === currentlyEditingChildId);
-                if (childIndex > -1) {
-                    childrenData[childIndex] = {
-                        ...childrenData[childIndex], 
-                        name, dob, school, class: childClassValue, notes,
-                        medicalInfo: medicalInfoItems,
-                        activities: activitiesItems 
-                    };
-                    actionHistory.push({ timestamp: new Date().toISOString(), user: currentUser, action: 'Modification profil enfant', details: childrenData[childIndex].name });
-                } else {
-                    console.error("Child not found for editing:", currentlyEditingChildId);
-                    return; 
-                }
+                const savedChild = await window.addChildToFirestore(childObject);
+                newChildId = savedChild.id; 
+                actionDetail = `Enfant ajouté: ${name}`;
+            }
+            
+            actionHistory.push({ timestamp: new Date().toISOString(), user: currentUserForHistory, action: actionDetail });
+            await saveData('actionHistory', actionHistory); 
+            if(typeof renderActionHistory === 'function') renderActionHistory();
+
+            if (typeof window.loadFirebaseData === 'function') {
+                await window.loadFirebaseData();
+            } else {
+                console.error("loadFirebaseData function not found on window object");
+            }
+            
+            if (typeof showChildProfile === 'function' && newChildId) {
+                 showChildProfile(newChildId);
             }
 
-            await saveData('childrenData', childrenData);
-            await saveData('actionHistory', actionHistory);
-            
-            renderDashboard(); 
+        } catch (error) {
+            console.error("Erreur sauvegarde enfant (Firestore Call):", error);
+            alert("Erreur lors de la sauvegarde de l'enfant: " + error.message);
         }
+    }
 
 
         function initializeCalendars() { 
@@ -1729,6 +1822,17 @@
         function setupEventListeners() { 
             const darkModeToggle = document.getElementById('darkModeToggle');
             if (darkModeToggle) darkModeToggle.addEventListener('click', toggleDarkMode);
+
+            // Auth buttons - ensure these IDs exist from Step 1 of the plan (they do)
+            const regBtn = document.getElementById('registerButton');
+            // Ensure functions from auth.js are called via window scope if not automatically global
+            if (regBtn) regBtn.addEventListener('click', () => window.registerUser()); 
+            
+            const loginBtn = document.getElementById('loginButton');
+            if (loginBtn) loginBtn.addEventListener('click', () => window.loginUser());
+            
+            const logoutBtn = document.getElementById('logoutButton');
+            if (logoutBtn) logoutBtn.addEventListener('click', () => window.logoutUser());
         }
 
         function setupCalendarEventListeners() {
@@ -1838,12 +1942,12 @@
         }
 
         async function loadSavedData() { 
-            childrenData = await loadData('childrenData', []);
-            scheduleData = await loadData('scheduleData', []); 
-            transitionsData = await loadData('transitionsData', []);
-            tasksData = await loadData('tasksData', []); 
+            // childrenData is now loaded from Firestore via loadFirebaseData in auth.js
+            // scheduleData = await loadData('scheduleData', []); // Will be loaded from Firestore later
+            // transitionsData = await loadData('transitionsData', []); // Will be loaded from Firestore later
+            // tasksData = await loadData('tasksData', []); // Will be loaded from Firestore later
             settingsData = await loadData('settingsData', settingsData); 
-            actionHistory = await loadData('actionHistory', []);
+            actionHistory = await loadData('actionHistory', []); // May move to Firestore
 
             if (!settingsData.taskCategories || settingsData.taskCategories.length === 0) {
                 settingsData.taskCategories = [
@@ -1878,10 +1982,12 @@
             if(exceptionParent1Btn) exceptionParent1Btn.textContent = settingsData.parent1Name;
             if(exceptionParent2Btn) exceptionParent2Btn.textContent = settingsData.parent2Name;
 
-            console.log('All data loaded and UI updated (theme, parent names, calendar settings).');
+            console.log('Local data (settings, action history) loaded. UI updated. Children data will be loaded from Firestore if user is logged in.');
             
             updateGlobalParentNameDisplays(); 
             
+            // childrenData will be populated by loadFirebaseData if a user is logged in.
+            // If not logged in, childrenData will be empty, and showChildProfile(null) is appropriate.
             if (childrenData && childrenData.length > 0) {
                 showChildProfile(childrenData[0].id); 
             } else {
@@ -2596,7 +2702,7 @@
             const tasksAnyoneCount = tasksData.filter(t => t.assignedParentName === 'Anyone').length;
 
             document.getElementById('tasksParent1Count').textContent = tasksParent1Count;
-            document.getElementById('tasksParent2Count').textContent = tasksParent2Count;
+            document.getElementById('tasksParent2Name').textContent = tasksParent2Count;
 
             if (window.taskDistributionChartInstance) {
                 window.taskDistributionChartInstance.data.datasets[0].data = [tasksParent1Count, tasksParent2Count, tasksAnyoneCount];
@@ -3136,14 +3242,15 @@
                     const imported = JSON.parse(e.target.result);
                     if (confirm("Êtes-vous sûr de vouloir importer ces données ? Toutes les données actuelles seront remplacées.")) {
                         settingsData = imported.settingsData || settingsData;
-                        childrenData = imported.childrenData || [];
+                        // childrenData is now managed by Firestore, so we don't load it from JSON this way.
+                        // childrenData = imported.childrenData || []; 
                         scheduleData = imported.scheduleData || [];
                         transitionsData = imported.transitionsData || [];
                         tasksData = imported.tasksData || [];
                         actionHistory = imported.actionHistory || [];
 
-                        await localforage.setItem('settingsData', settingsData);
-                        await localforage.setItem('childrenData', childrenData);
+                        await saveData('settingsData', settingsData);
+                        // await localforage.setItem('childrenData', childrenData); // Removed
                         await localforage.setItem('scheduleData', scheduleData);
                         await localforage.setItem('transitionsData', transitionsData);
                         await localforage.setItem('tasksData', tasksData);
