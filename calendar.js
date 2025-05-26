@@ -12,8 +12,8 @@ Calendar Event Data Model (stored under families/{familyName}/calendarEvents/{ev
 let currentDateGlobal = new Date(); // Used for month navigation
 let calendarGrid;
 let currentMonthYearElement;
-let db; 
-let currentFamilyName; 
+// let db; 
+// let currentFamilyName; 
 let familyCalendarEvents = {}; 
 let familyUsersData = {}; // Renamed from familyUsers to avoid conflict with local var in some functions
 

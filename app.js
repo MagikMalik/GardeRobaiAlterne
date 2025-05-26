@@ -1,12 +1,14 @@
 const firebaseConfig = {
   apiKey: "AIzaSyBB-xtM869XDak8ckEzRQAqdEJ7yEOr5f4",
   authDomain: "gardealterne-b6b17.firebaseapp.com",
-  databaseURL: "https://gardealterne-b6b17-default-rtdb.firebaseio.com", // Added this line
+  databaseURL: "https://gardealterne-b6b17-default-rtdb.europe-west1.firebasedatabase.app", // Added this line
   projectId: "gardealterne-b6b17",
   storageBucket: "gardealterne-b6b17.appspot.com", // Ensured standard format
   messagingSenderId: "275193359676",
   appId: "1:275193359676:web:1eb29392463a519ea00239"
 };
+
+
 
 if (typeof firebase !== 'undefined') {
   const app = firebase.initializeApp(firebaseConfig);
