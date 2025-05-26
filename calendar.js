@@ -30,8 +30,10 @@ let custodyDurationMonthsInput, generateCustodyPlanBtn, custodyConfigMessageElem
 let currentGuardianTodayElement, currentGuardianWeekElement, daysRemainingCurrentGardeElement;
 let nextTransitionDateElement, nextTransitionParentElement, weeklyEventsListElement;
 
-
+let calendarInitialized = false;
 function initCalendar(databaseService, familyNameFromAuth) {
+    if (calendarInitialized) return;
+    calendarInitialized = true;
     db = databaseService;
     currentFamilyName = familyNameFromAuth;
 
