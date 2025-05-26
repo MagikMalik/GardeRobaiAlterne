@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Garde Alternée</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="container mx-auto p-4 w-full h-full">
+        <!-- Landing Page Container -->
+        <div id="landing-page" class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-xl">
+            <!-- Create Family Form -->
+            <div id="create-family-section" class="mb-10">
+                <h2 class="text-2xl font-bold text-center text-gray-700 mb-6">Créer une Famille</h2>
+                <div class="space-y-4">
+                    <input type="text" id="create-family-name" placeholder="Nom de famille" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="email" id="create-email" placeholder="Votre Email" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <select id="create-role" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="Papa">Papa</option>
+                        <option value="Maman">Maman</option>
+                    </select>
+                    <input type="password" id="create-password" placeholder="Mot de passe" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="password" id="create-confirm-password" placeholder="Confirmer le mot de passe" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button id="create-family-button" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline">Créer la famille</button>
+                    <p id="create-family-error" class="text-red-500 text-sm text-center"></p>
+                </div>
+            </div>
+
+            <!-- Login Form -->
+            <div id="login-section">
+                <h2 class="text-2xl font-bold text-center text-gray-700 mb-6">Se Connecter</h2>
+                <div class="space-y-4">
+                    <input type="text" id="login-family-name" placeholder="Nom de famille" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                    <input type="email" id="login-email" placeholder="Votre Email" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                    <input type="password" id="login-password" placeholder="Mot de passe" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                    <button id="login-button" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline">Se connecter</button>
+                    <p id="login-error" class="text-red-500 text-sm text-center"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- App Container (Initially Hidden) -->
+        <div id="app-container" class="hidden h-screen flex flex-col">
+            <!-- Header/Navbar -->
+            <header class="bg-gray-700 text-white p-4 flex justify-between items-center flex-shrink-0">
+                <h1 class="text-xl">Garde RobAlternée</h1>
+                <button id="logout-button" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                    Déconnexion
+                </button>
+            </header>
+
+            <!-- Main Content Area -->
+            <main class="flex-grow flex flex-row overflow-hidden">
+                <!-- Column 1: Calendar -->
+                <div id="calendar-column" class="w-1/4 bg-gray-100 p-4 border-r border-gray-300 overflow-y-auto">
+                    <h2 class="text-lg font-semibold mb-2">Calendrier</h2>
+                    <div id="calendar-controls" class="flex justify-between items-center mb-2">
+                        <button id="prev-month-btn" class="px-3 py-1 bg-gray-300 hover:bg-gray-400 rounded text-sm">&lt; Préc</button>
+                        <h3 id="current-month-year" class="text-md font-semibold">Mois Année</h3>
+                        <button id="next-month-btn" class="px-3 py-1 bg-gray-300 hover:bg-gray-400 rounded text-sm">Suiv &gt;</button>
+                    </div>
+                    <div id="calendar-grid" class="grid grid-cols-7 gap-1 text-sm">
+                        <!-- Day headers (L, M, M, J, V, S, D) -->
+                        <div class="text-center font-semibold">L</div>
+                        <div class="text-center font-semibold">M</div>
+                        <div class="text-center font-semibold">M</div>
+                        <div class="text-center font-semibold">J</div>
+                        <div class="text-center font-semibold">V</div>
+                        <div class="text-center font-semibold">S</div>
+                        <div class="text-center font-semibold">D</div>
+                        <!-- Calendar days will be populated by JS -->
+                    </div>
+                    <div class="mt-4">
+                        <h3 class="text-md font-semibold">Récap Semaine Courante</h3>
+                        <div id="weekly-recap" class="text-sm p-2 bg-white rounded shadow">
+                            <p>Parent responsable: <span id="current-guardian">-</span></p>
+                            <p>Jours restants: <span id="days-remaining">-</span></p>
+                            <p>Prochaine transition: <span id="next-transition">-</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Column 2: Main (TodoList & Notes) -->
+                <div id="main-column" class="w-1/2 bg-gray-50 p-4 border-r border-gray-300 overflow-y-auto">
+                    <h2 class="text-lg font-semibold mb-2">TodoList & Notes</h2>
+                    <p class="text-gray-500">Contenu à venir...</p>
+                </div>
+
+                <!-- Column 3: Settings & Children -->
+                <div id="settings-column" class="w-1/4 bg-gray-100 p-4 overflow-y-auto">
+                    <h2 class="text-lg font-semibold mb-2">Paramètres & Enfants</h2>
+                    <div id="children-section" class="mb-4 p-2 bg-white rounded shadow">
+                         <h3 class="text-md font-semibold mb-1">Enfants</h3>
+                         <div id="children-list" class="mb-2 text-sm">
+                            <p class="text-gray-500">Aucun enfant ajouté.</p>
+                         </div>
+                         <button id="add-child-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded text-sm">
+                             Ajouter Enfant
+                         </button>
+                    </div>
+                    <hr class="my-4">
+                    <div id="settings-app-section" class="p-2 bg-white rounded shadow">
+                        <h3 class="text-md font-semibold mb-1">Paramètres de Garde</h3>
+                        <!-- Custody Configuration Form -->
+                        <form id="custody-config-form" class="mt-2 space-y-3">
+                            <h4 class="text-sm font-semibold text-gray-700">Configuration Type de Garde</h4>
+                            <div>
+                                <label for="custody-pattern" class="block text-xs font-medium text-gray-600">Schéma de garde</label>
+                                <select id="custody-pattern" name="custody-pattern" class="mt-1 block w-full px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-xs">
+                                    <option value="alternating_week">Classique: 1 semaine sur 2</option>
+                                    <option value="2255">2-2-5-5 (Lun-Mar P1, Mer-Jeu P2, Ven-Dim P1 / Lun-Mar P2, Mer-Jeu P1, Ven-Dim P2)</option>
+                                    <option value="custom">Personnalisée (via calendrier)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="custody-start-date" class="block text-xs font-medium text-gray-600">Date de début du schéma</label>
+                                <input type="date" id="custody-start-date" name="custody-start-date" class="mt-1 block w-full px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-xs" required>
+                            </div>
+                            <div>
+                                <label for="custody-starting-parent-role" class="block text-xs font-medium text-gray-600">Parent qui commence</label>
+                                <select id="custody-starting-parent-role" name="custody-starting-parent-role" class="mt-1 block w-full px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-xs" required>
+                                    <!-- Options populated by JS: Papa, Maman -->
+                                </select>
+                            </div>
+                            <div>
+                                <label for="custody-duration-months" class="block text-xs font-medium text-gray-600">Générer pour combien de mois?</label>
+                                <input type="number" id="custody-duration-months" name="custody-duration-months" value="6" min="1" max="24" class="mt-1 block w-full px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-xs" required>
+                            </div>
+                            <button type="submit" id="generate-custody-plan-btn" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded text-sm">
+                                Générer le planning de garde
+                            </button>
+                            <div id="custody-config-message" class="text-xs mt-1"></div>
+                        </form>
+                        <hr class="my-4">
+                        <p class="text-gray-500">Autre configuration à venir...</p>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+    <script src="ui.js"></script>
+    <script src="auth.js"></script>
+    <script src="calendar.js"></script> <!-- Ensure calendar.js is linked -->
+    <script src="children.js"></script>
+    <script src="app.js"></script>
+
+    <!-- Add/Edit Event Modal -->
+    <div id="event-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center hidden">
+        <div class="relative p-8 bg-white w-full max-w-lg m-auto flex-col flex rounded-lg shadow-lg">
+            <button id="close-event-modal-btn" class="absolute top-0 right-0 mt-4 mr-4 text-gray-700 hover:text-gray-900">&times;</button>
+            <h2 id="event-modal-title" class="text-xl font-semibold mb-4">Ajouter/Modifier un Événement</h2>
+            <form id="event-form">
+                <input type="hidden" id="event-id" name="event-id">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="event-type" class="block text-sm font-medium text-gray-700">Type d'événement</label>
+                        <select id="event-type" name="event-type" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                            <option value="gardePapa">Garde Papa</option>
+                            <option value="gardeMaman">Garde Maman</option>
+                            <option value="vacancesPapa">Vacances Papa</option>
+                            <option value="vacancesMaman">Vacances Maman</option>
+                            <option value="evenementSpecial">Événement Spécial</option>
+                            <option value="jourFerie">Jour Férié</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="event-userId" class="block text-sm font-medium text-gray-700">Parent Concerné</label>
+                        <select id="event-userId" name="event-userId" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                            <!-- Options will be populated by JS -->
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="event-start-date" class="block text-sm font-medium text-gray-700">Date de début</label>
+                        <input type="date" id="event-start-date" name="event-start-date" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                    </div>
+                    <div>
+                        <label for="event-end-date" class="block text-sm font-medium text-gray-700">Date de fin</label>
+                        <input type="date" id="event-end-date" name="event-end-date" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="event-title" class="block text-sm font-medium text-gray-700">Titre (si Événement Spécial)</label>
+                    <input type="text" id="event-title" name="event-title" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                </div>
+
+                <div class="mb-4">
+                    <label for="event-description" class="block text-sm font-medium text-gray-700">Description (Optionnel)</label>
+                    <textarea id="event-description" name="event-description" rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
+                </div>
+                
+                <p id="event-error" class="text-red-500 text-sm mb-2"></p>
+                
+                <div class="flex justify-between items-center">
+                    <button type="button" id="delete-event-btn" class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 hidden">Supprimer</button>
+                    <div class="space-x-2">
+                        <button type="button" id="cancel-event-btn" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">Annuler</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Enregistrer</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Child Modal -->
+    <div id="add-child-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center hidden">
+        <div class="relative p-8 bg-white w-full max-w-md m-auto flex-col flex rounded-lg shadow-lg">
+            <button id="close-add-child-modal-btn" class="absolute top-0 right-0 mt-4 mr-4 text-gray-700 hover:text-gray-900">&times;</button>
+            <h2 class="text-xl font-semibold mb-4">Ajouter un Enfant</h2>
+            <form id="add-child-form">
+                <div class="mb-4">
+                    <label for="child-name" class="block text-sm font-medium text-gray-700">Nom de l'enfant</label>
+                    <input type="text" id="child-name" name="child-name" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                </div>
+                <div class="mb-4">
+                    <label for="child-dob" class="block text-sm font-medium text-gray-700">Date de naissance</label>
+                    <input type="date" id="child-dob" name="child-dob" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                </div>
+                <div id="add-child-error" class="text-red-500 text-sm mb-2"></div>
+                <div class="flex justify-end space-x-2">
+                    <button type="button" id="cancel-add-child-btn" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">Annuler</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
