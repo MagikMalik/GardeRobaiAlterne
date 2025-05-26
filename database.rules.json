@@ -1,0 +1,89 @@
+{
+  "rules": {
+    // Default deny all access
+    ".read": false,
+    ".write": false,
+    "families": {
+      "$familyName": {
+        // This rule allows the initial creation of the family by the owner,
+        // and subsequent writes by authenticated members of the family.
+        // For initial creation: newData must contain users/auth.uid and details/owner as auth.uid, and data must not exist.
+        // For subsequent writes: user must already exist in root.child('families').child($familyName).child('users').child(auth.uid).
+        ".write": "auth != null && ( (newData.child('users').child(auth.uid).exists() && newData.child('details/owner').val() === auth.uid && !data.exists()) || root.child('families').child($familyName).child('users').child(auth.uid).exists())",
+        // Read access for authenticated members of the family.
+        ".read": "auth != null && root.child('families').child($familyName).child('users').child(auth.uid).exists()",
+
+        "details": {
+          // Write to 'details' is allowed if:
+          // 1. Creating: auth.uid is the owner, and 'details' node doesn't exist yet.
+          // 2. Updating: auth.uid is the owner, 'details' exists, and owner & familyName are not changed.
+          ".write": "auth != null && newData.child('owner').val() === auth.uid && ( (!data.exists() && newData.child('familyName').val() === $familyName) || (data.exists() && newData.child('owner').val() === data.child('owner').val() && newData.child('familyName').val() === data.child('familyName').val()) )",
+          ".validate": "newData.hasChildren(['familyName', 'owner']) && newData.child('familyName').val() === $familyName && newData.child('owner').isString()",
+          "familyName": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val() === $familyName" }, // Ensures consistency with $familyName key
+          "owner": { ".validate": "newData.isString() && newData.val().length > 0 && ( (!data.exists() && newData.val() === auth.uid) || (data.exists() && newData.val() === data.val()) )" } // Owner cannot change after creation
+        },
+        "users": {
+          // Validation for total number of users (max 2). Applies when 'users' node is written to.
+          // Allows updates to existing users if count doesn't increase beyond 2.
+          ".validate": "newData.numChildren() <= 2 || (data.exists() && newData.numChildren() === data.numChildren())",
+          "$userId": {
+            // User can write to their own node if they are authenticated ($userId === auth.uid).
+            ".write": "auth != null && $userId === auth.uid",
+            // Validate structure and content for individual user entries.
+            ".validate": "newData.hasChildren(['email', 'role'])",
+            "email": {
+              ".validate": "newData.isString() && newData.val().matches(/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,4}$/)"
+            },
+            "role": {
+              ".validate": "newData.isString() && (newData.val() === 'Papa' || newData.val() === 'Maman')"
+              // Role uniqueness (e.g., no two 'Papa' roles) is primarily handled by application logic.
+              // These rules ensure the role value itself is one of the allowed strings.
+            }
+          }
+        },
+        "children": {
+          // Any authenticated member of the family can read/write children data.
+          ".read": "auth != null && root.child('families').child($familyName).child('users').child(auth.uid).exists()",
+          ".write": "auth != null && root.child('families').child($familyName).child('users').child(auth.uid).exists()",
+          "$childId": {
+            ".validate": "newData.hasChildren(['name', 'dob'])",
+            "name": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100" },
+            "dob": { ".validate": "newData.isString() && newData.val().matches(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/)" } // YYYY-MM-DD
+          }
+        },
+        "calendarEvents": {
+          ".read": "auth != null && root.child('families').child($familyName).child('users').child(auth.uid).exists()",
+          ".write": "auth != null && root.child('families').child($familyName).child('users').child(auth.uid).exists()",
+          "$eventId": {
+            ".validate": "newData.hasChildren(['date', 'type', 'title'])", // Example: ensure these fields exist
+            "date": { ".validate": "newData.isString() && newData.val().matches(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/)" },
+            "type": { ".validate": "newData.isString() && newData.val().length > 0" },
+            "title": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200" }
+          }
+        },
+        "todoList": {
+          ".read": "auth != null && root.child('families').child($familyName).child('users').child(auth.uid).exists()",
+          ".write": "auth != null && root.child('families').child($familyName).child('users').child(auth.uid).exists()",
+          "$taskId": {
+            ".validate": "newData.hasChildren(['task', 'completed'])", // Example
+            "task": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 500" },
+            "completed": { ".validate": "newData.isBoolean()" }
+          }
+        },
+        "notes": {
+          ".read": "auth != null && root.child('families').child($familyName).child('users').child(auth.uid).exists()",
+          ".write": "auth != null && root.child('families').child($familyName).child('users').child(auth.uid).exists()",
+          "$noteId": {
+            ".validate": "newData.hasChildren(['content'])", // Example
+            "content": { ".validate": "newData.isString() && newData.val().length > 0" }
+          }
+        },
+        "settings": {
+          ".read": "auth != null && root.child('families').child($familyName).child('users').child(auth.uid).exists()",
+          ".write": "auth != null && root.child('families').child($familyName).child('users').child(auth.uid).exists()"
+          // Specific settings validations can be added here as settings are defined.
+        }
+      }
+    }
+  }
+}
