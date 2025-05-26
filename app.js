@@ -1,17 +1,18 @@
 const firebaseConfig = {
   apiKey: "AIzaSyBB-xtM869XDak8ckEzRQAqdEJ7yEOr5f4",
   authDomain: "gardealterne-b6b17.firebaseapp.com",
+  databaseURL: "https://gardealterne-b6b17-default-rtdb.firebaseio.com", // Added this line
   projectId: "gardealterne-b6b17",
-  storageBucket: "gardealterne-b6b17.appspot.com",
+  storageBucket: "gardealterne-b6b17.appspot.com", // Ensured standard format
   messagingSenderId: "275193359676",
   appId: "1:275193359676:web:1eb29392463a519ea00239"
 };
 
 if (typeof firebase !== 'undefined') {
   const app = firebase.initializeApp(firebaseConfig);
-  console.log("Firebase initialized successfully.");
+  console.log("Firebase initialized successfully with databaseURL.");
   const auth = firebase.auth();
-  const database = firebase.database();
+  const database = firebase.database(); // This should now work without warnings/errors
 
   if (typeof initAuth === 'function') {
     initAuth(auth, database); 
@@ -21,7 +22,7 @@ if (typeof firebase !== 'undefined') {
 
   // Call checkAuthState to handle initial UI and auth state listening
   if (typeof checkAuthState === 'function') {
-    checkAuthState(); // This will now manage showing landing/app page
+    checkAuthState(); 
   } else {
     console.error("checkAuthState function not found. Make sure auth.js is loaded and defines it.");
     if (typeof showLandingPage === 'function') {
@@ -29,17 +30,8 @@ if (typeof firebase !== 'undefined') {
     }
   }
 
-  // Initialize Calendar
-  // This should ideally be called when the app interface is shown,
-  // but for now, we'll call it after auth setup.
-  // If initCalendar relies on elements only visible in the app interface,
-  // it might be better to call it from within showAppInterface in ui.js,
-  // or ensure elements are present even if hidden.
-  if (typeof initCalendar === 'function') {
-    initCalendar();
-  } else {
-    console.error("initCalendar function not found. Make sure calendar.js is loaded.");
-  }
+  // Note: initCalendar is called within checkAuthState in auth.js after user and family are confirmed.
+  // No direct call to initCalendar here is needed as per previous subtask logic.
 
 } else {
   console.error("Firebase SDK not loaded. Make sure to include it in your HTML.");

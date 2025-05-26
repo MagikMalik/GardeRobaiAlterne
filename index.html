@@ -83,8 +83,56 @@
 
                 <!-- Column 2: Main (TodoList & Notes) -->
                 <div id="main-column" class="w-1/2 bg-gray-50 p-4 border-r border-gray-300 overflow-y-auto">
-                    <h2 class="text-lg font-semibold mb-2">TodoList & Notes</h2>
-                    <p class="text-gray-500">Contenu à venir...</p>
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold">TodoList</h2>
+                        <button id="add-task-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded text-sm">
+                            Ajouter une Tâche
+                        </button>
+                    </div>
+
+                    <div class="flex space-x-4 mt-4">
+                        <div id="todo-col-todo" class="w-1/3 bg-gray-200 p-2 rounded">
+                            <h3 class="font-semibold mb-2 text-center">À faire</h3>
+                            <div id="tasks-todo" class="space-y-2 min-h-[50px]">
+                                <!-- Task cards will be appended here -->
+                            </div>
+                        </div>
+                        <div id="todo-col-inprogress" class="w-1/3 bg-gray-200 p-2 rounded">
+                            <h3 class="font-semibold mb-2 text-center">En cours</h3>
+                            <div id="tasks-inprogress" class="space-y-2 min-h-[50px]">
+                                <!-- Task cards will be appended here -->
+                            </div>
+                        </div>
+                        <div id="todo-col-done" class="w-1/3 bg-gray-200 p-2 rounded">
+                            <h3 class="font-semibold mb-2 text-center">Terminé</h3>
+                            <div id="tasks-done" class="space-y-2 min-h-[50px]">
+                                <!-- Task cards will be appended here -->
+                            </div>
+                        </div>
+                    </div>
+                    <hr class="my-6">
+                    <div>
+                        <h2 class="text-lg font-semibold mb-2">Notes</h2>
+                        <form id="add-note-form" class="mb-3">
+                            <textarea id="note-content" class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" rows="3" placeholder="Écrire une nouvelle note..."></textarea>
+                            <div class="flex justify-between items-center mt-2">
+                                <div>
+                                    <label for="note-child-link" class="block text-xs font-medium text-gray-600">Lier à un enfant (optionnel):</label>
+                                    <select id="note-child-link" name="note-child-link" class="mt-1 block w-full px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-xs">
+                                        <option value="">Aucun enfant spécifique</option>
+                                        <!-- Children populated by JS -->
+                                    </select>
+                                </div>
+                                <button type="submit" id="add-note-btn" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded text-sm">
+                                    Ajouter la Note
+                                </button>
+                            </div>
+                            <p id="note-error" class="text-red-500 text-xs mt-1"></p>
+                        </form>
+                        <div id="notes-list" class="space-y-3 mt-3">
+                            <!-- Note cards will be populated here -->
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Column 3: Settings & Children -->
@@ -101,6 +149,15 @@
                     </div>
                     <hr class="my-4">
                     <div id="settings-app-section" class="p-2 bg-white rounded shadow">
+                        <h3 class="text-md font-semibold mb-2 border-b pb-1">Mon Profil</h3>
+                        <div id="user-profile-display" class="mt-2 space-y-1 text-sm mb-4">
+                            <p>Nom de famille: <span id="profile-family-name" class="font-semibold">-</span></p>
+                            <p>Rôle: <span id="profile-role" class="font-semibold">-</span></p>
+                            <p>Email: <span id="profile-email" class="font-semibold">-</span></p>
+                        </div>
+                        
+                        <hr class="my-4">
+
                         <h3 class="text-md font-semibold mb-1">Paramètres de Garde</h3>
                         <!-- Custody Configuration Form -->
                         <form id="custody-config-form" class="mt-2 space-y-3">
@@ -146,8 +203,10 @@
 
     <script src="ui.js"></script>
     <script src="auth.js"></script>
-    <script src="calendar.js"></script> <!-- Ensure calendar.js is linked -->
+    <script src="calendar.js"></script>
     <script src="children.js"></script>
+    <script src="todo.js"></script>
+    <script src="notes.js"></script>
     <script src="app.js"></script>
 
     <!-- Add/Edit Event Modal -->
@@ -212,23 +271,188 @@
         </div>
     </div>
 
+    <!-- Edit Note Modal -->
+    <div id="edit-note-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center hidden">
+        <div class="relative p-8 bg-white w-full max-w-lg m-auto flex-col flex rounded-lg shadow-lg">
+            <button id="close-edit-note-modal-btn" class="absolute top-0 right-0 mt-4 mr-4 text-gray-700 hover:text-gray-900">&times;</button>
+            <h2 id="edit-note-modal-title" class="text-xl font-semibold mb-4">Modifier la Note</h2>
+            <form id="edit-note-form">
+                <input type="hidden" id="edit-note-id" name="edit-note-id">
+                
+                <div class="mb-4">
+                    <label for="edit-note-content" class="block text-sm font-medium text-gray-700">Contenu</label>
+                    <textarea id="edit-note-content" name="edit-note-content" rows="4" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required></textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label for="edit-note-child-link" class="block text-sm font-medium text-gray-700">Lier à un enfant (optionnel)</label>
+                    <select id="edit-note-child-link" name="edit-note-child-link" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        <option value="">Aucun enfant spécifique</option>
+                        <!-- Children populated by JS -->
+                    </select>
+                </div>
+                
+                <p id="edit-note-error" class="text-red-500 text-sm mb-2"></p>
+                
+                <div class="flex justify-end space-x-2">
+                    <button type="button" id="cancel-edit-note-btn" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">Annuler</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Enregistrer les modifications</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Add Child Modal -->
     <div id="add-child-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center hidden">
         <div class="relative p-8 bg-white w-full max-w-md m-auto flex-col flex rounded-lg shadow-lg">
             <button id="close-add-child-modal-btn" class="absolute top-0 right-0 mt-4 mr-4 text-gray-700 hover:text-gray-900">&times;</button>
-            <h2 class="text-xl font-semibold mb-4">Ajouter un Enfant</h2>
-            <form id="add-child-form">
-                <div class="mb-4">
-                    <label for="child-name" class="block text-sm font-medium text-gray-700">Nom de l'enfant</label>
-                    <input type="text" id="child-name" name="child-name" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+            <h2 id="child-modal-title" class="text-xl font-semibold mb-4">Ajouter un Enfant</h2>
+            <form id="add-child-form" class="space-y-4">
+                <input type="hidden" id="edit-child-id">
+                
+                <!-- Basic Info -->
+                <div>
+                    <h3 class="text-md font-semibold text-gray-700 mb-2 border-b pb-1">Informations de Base</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="child-name" class="block text-sm font-medium text-gray-700">Nom de l'enfant</label>
+                            <input type="text" id="child-name" name="child-name" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                        </div>
+                        <div>
+                            <label for="child-dob" class="block text-sm font-medium text-gray-700">Date de naissance</label>
+                            <input type="date" id="child-dob" name="child-dob" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                        </div>
+                    </div>
                 </div>
-                <div class="mb-4">
-                    <label for="child-dob" class="block text-sm font-medium text-gray-700">Date de naissance</label>
-                    <input type="date" id="child-dob" name="child-dob" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+
+                <!-- School Info -->
+                <div>
+                    <h3 class="text-md font-semibold text-gray-700 mb-2 border-b pb-1">Scolarité</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label for="child-school-name" class="block text-sm font-medium text-gray-700">Nom de l'école</label>
+                            <input type="text" id="child-school-name" name="child-school-name" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm">
+                        </div>
+                        <div>
+                            <label for="child-class-name" class="block text-sm font-medium text-gray-700">Classe</label>
+                            <input type="text" id="child-class-name" name="child-class-name" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm">
+                        </div>
+                        <div>
+                            <label for="child-teacher-name" class="block text-sm font-medium text-gray-700">Enseignant(e)</label>
+                            <input type="text" id="child-teacher-name" name="child-teacher-name" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm">
+                        </div>
+                    </div>
                 </div>
-                <div id="add-child-error" class="text-red-500 text-sm mb-2"></div>
-                <div class="flex justify-end space-x-2">
+
+                <!-- Activities -->
+                <div>
+                    <h3 class="text-md font-semibold text-gray-700 mb-2 border-b pb-1">Activités</h3>
+                    <div>
+                        <label for="child-activities-text" class="block text-sm font-medium text-gray-700">Liste des activités (ex: Football Lun 17h, Piano Mer 15h)</label>
+                        <textarea id="child-activities-text" name="child-activities-text" rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"></textarea>
+                    </div>
+                </div>
+
+                <!-- Medical Info -->
+                <div>
+                    <h3 class="text-md font-semibold text-gray-700 mb-2 border-b pb-1">Informations Médicales</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="child-allergies" class="block text-sm font-medium text-gray-700">Allergies</label>
+                            <textarea id="child-allergies" name="child-allergies" rows="2" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"></textarea>
+                        </div>
+                        <div>
+                            <label for="child-medications" class="block text-sm font-medium text-gray-700">Médicaments</label>
+                            <textarea id="child-medications" name="child-medications" rows="2" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm"></textarea>
+                        </div>
+                        <div>
+                            <label for="child-doctor-name" class="block text-sm font-medium text-gray-700">Nom du médecin</label>
+                            <input type="text" id="child-doctor-name" name="child-doctor-name" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm">
+                        </div>
+                        <div>
+                            <label for="child-doctor-phone" class="block text-sm font-medium text-gray-700">Téléphone médecin</label>
+                            <input type="text" id="child-doctor-phone" name="child-doctor-phone" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Private Note -->
+                <div>
+                    <h3 class="text-md font-semibold text-gray-700 mb-2 border-b pb-1">Note Privée <span class="text-xs font-normal">(visible uniquement par vous)</span></h3>
+                    <div>
+                        <label for="child-private-note-content" class="block text-sm font-medium text-gray-700">Ajouter/Modifier votre note privée pour cet enfant:</label>
+                        <textarea id="child-private-note-content" name="child-private-note-content" rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm" placeholder="Écrire une note privée..."></textarea>
+                        <p class="text-xs text-gray-500 mt-1">Si vous modifiez les informations de l'enfant et que ce champ est rempli, une nouvelle note privée sera ajoutée. La gestion (modification/suppression) des notes privées existantes se fera dans une section dédiée.</p>
+                    </div>
+                    <!-- Display area for previous private notes (conceptual for this subtask, not fully implemented for listing) -->
+                    <div id="child-private-note-display" class="mt-2 text-xs text-gray-600">
+                        <!-- JS might populate this with the latest note, or it remains a placeholder -->
+                    </div>
+                </div>
+                
+                <div id="add-child-error" class="text-red-500 text-sm pt-2"></div>
+                <div class="flex justify-end space-x-2 pt-4">
                     <button type="button" id="cancel-add-child-btn" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">Annuler</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add/Edit Task Modal -->
+    <div id="task-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center hidden">
+        <div class="relative p-8 bg-white w-full max-w-lg m-auto flex-col flex rounded-lg shadow-lg">
+            <button id="close-task-modal-btn" class="absolute top-0 right-0 mt-4 mr-4 text-gray-700 hover:text-gray-900">&times;</button>
+            <h2 id="task-modal-title" class="text-xl font-semibold mb-4">Ajouter une Tâche</h2>
+            <form id="task-form">
+                <input type="hidden" id="task-id" name="task-id">
+                
+                <div class="mb-4">
+                    <label for="task-title" class="block text-sm font-medium text-gray-700">Titre</label>
+                    <input type="text" id="task-title" name="task-title" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required>
+                </div>
+
+                <div class="mb-4">
+                    <label for="task-description" class="block text-sm font-medium text-gray-700">Description</label>
+                    <textarea id="task-description" name="task-description" rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="task-due-date" class="block text-sm font-medium text-gray-700">Date d'échéance</label>
+                        <input type="date" id="task-due-date" name="task-due-date" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="task-priority" class="block text-sm font-medium text-gray-700">Priorité</label>
+                        <select id="task-priority" name="task-priority" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                            <option value="Moyenne">Moyenne</option>
+                            <option value="Haute">Haute</option>
+                            <option value="Basse">Basse</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="task-assigned-to" class="block text-sm font-medium text-gray-700">Assigné à</label>
+                        <select id="task-assigned-to" name="task-assigned-to" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                            <!-- Options: Papa, Maman, LesDeux - populated by JS -->
+                        </select>
+                    </div>
+                    <div>
+                        <label for="task-status" class="block text-sm font-medium text-gray-700">Statut</label>
+                        <select id="task-status" name="task-status" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                            <option value="À faire">À faire</option>
+                            <option value="En cours">En cours</option>
+                            <option value="Terminé">Terminé</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <p id="task-error" class="text-red-500 text-sm mb-2"></p>
+                
+                <div class="flex justify-end space-x-2">
+                    <button type="button" id="cancel-task-btn" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">Annuler</button>
                     <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Enregistrer</button>
                 </div>
             </form>
