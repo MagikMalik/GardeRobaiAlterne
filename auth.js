@@ -280,3 +280,84 @@ function checkAuthState() {
         }
     });
 }
+
+// Helper function to get the current user's role
+// Assumes familyName is available in localStorage and role is at families/{familyName}/users/{userId}/role
+function getCurrentUserRole() {
+    return new Promise((resolve, reject) => {
+        const user = auth.currentUser; // Using the global 'auth' from initAuth
+        if (user) {
+            const userId = user.uid;
+            const familyName = localStorage.getItem('familyName');
+            if (!familyName) {
+                console.warn("getCurrentUserRole: familyName not found in localStorage.");
+                return resolve("Rôle inconnu (famille non spécifiée)");
+            }
+            // Path based on observed structure in auth.js
+            database.ref(`families/${familyName}/users/${userId}/role`).once('value')
+                .then(snapshot => {
+                    const role = snapshot.val();
+                    resolve(role || "Rôle inconnu");
+                })
+                .catch(error => {
+                    console.error("Error fetching user role from Firebase:", error);
+                    reject("Erreur récupération du rôle: " + error.message);
+                });
+        } else {
+            console.log("getCurrentUserRole: No user logged in.");
+            resolve("Utilisateur non connecté"); // Or reject, depending on desired handling
+        }
+    });
+}
+
+// Helper function to get the other parent's email
+// Assumes familyName is in localStorage and users are under families/{familyName}/users/
+function getOtherParentEmail() {
+    return new Promise((resolve, reject) => {
+        const currentUser = auth.currentUser; // Using the global 'auth'
+        if (!currentUser) {
+            console.log("getOtherParentEmail: No user logged in.");
+            return reject("Utilisateur non connecté.");
+        }
+        const currentUserId = currentUser.uid;
+        const familyName = localStorage.getItem('familyName');
+
+        if (!familyName) {
+            console.warn("getOtherParentEmail: familyName not found in localStorage.");
+            return reject("Famille non spécifiée pour trouver l'autre parent.");
+        }
+
+        const familyUsersRef = database.ref(`families/${familyName}/users`);
+        familyUsersRef.once('value')
+            .then(snapshot => {
+                const users = snapshot.val();
+                if (!users) {
+                    return reject("Aucun utilisateur trouvé dans la famille.");
+                }
+                
+                let otherParentUserId = null;
+                for (const userIdInFamily in users) {
+                    if (userIdInFamily !== currentUserId) {
+                        otherParentUserId = userIdInFamily;
+                        break; // Assuming only two users (parents) per family for simplicity
+                    }
+                }
+
+                if (!otherParentUserId) {
+                    return reject("Autre parent non trouvé dans la famille.");
+                }
+
+                // Email is stored directly under the user's node in the family's user list
+                const otherParentEmail = users[otherParentUserId].email;
+                if (otherParentEmail) {
+                    resolve(otherParentEmail);
+                } else {
+                    reject("Email de l'autre parent non trouvé.");
+                }
+            })
+            .catch(error => {
+                console.error("Error fetching family users for getOtherParentEmail:", error);
+                reject("Erreur récupération des membres de la famille: " + error.message);
+            });
+    });
+}

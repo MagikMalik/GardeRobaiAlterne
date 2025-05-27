@@ -596,6 +596,31 @@ async function handleEventFormSubmit(event) {
             console.log("[handleEventFormSubmit] Event pushed successfully. Event ID:", newEventRef.key);
         }
         toggleEventModal(false);
+
+        // // Email notification prompt
+        // if (confirm("Voulez-vous envoyer une notification par e-mail à l'autre parent concernant cette modification ?")) {
+        //     Promise.all([getCurrentUserRole(), getOtherParentEmail()])
+        //         .then(([role, email]) => {
+        //             const currentUserRole = role;
+        //             const otherParentEmail = email;
+
+        //             const subject = `Modification du calendrier par ${currentUserRole}`;
+        //             let body = `L'événement '${eventData.title || eventData.type}' du ${eventData.startDate} au ${eventData.endDate} a été ${existingEventId ? 'modifié' : 'ajouté'}.\n\n`;
+        //             if (eventData.description) {
+        //                 body += `Description: ${eventData.description}\n`;
+        //             }
+        //             body += "\nCordialement,\nL'application Garde Alternée";
+
+        //             sendEmailNotification_SMTP(otherParentEmail, subject, body)
+        //                 .then(() => console.log("SMTP notification attempt logged after fetching user details for calendar event."))
+        //                 .catch(err => console.error("Error sending SMTP notification for calendar event:", err));
+        //         })
+        //         .catch(error => {
+        //             console.error("Erreur lors de la récupération des détails de l'utilisateur pour la notification (calendrier):", error);
+        //             alert("Impossible de récupérer les informations nécessaires pour envoyer la notification. Veuillez vérifier la console.");
+        //         });
+        // }
+
     } catch (error) {
         // MODIFY THIS LOG:
         console.error("[handleEventFormSubmit] Error saving event to Firebase:", error);

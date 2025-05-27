@@ -150,6 +150,39 @@ async function handleTaskFormSubmit(event) {
             await dbTodo.ref(`families/${currentFamilyNameTodo}/todoList`).push(taskData);
         }
         toggleTaskModal(false);
+
+        // // Email notification prompt
+        // if (confirm("Voulez-vous envoyer une notification par e-mail à l'autre parent concernant cette modification de tâche ?")) {
+        //     Promise.all([getCurrentUserRole(), getOtherParentEmail()])
+        //         .then(([role, email]) => {
+        //             const currentUserRole = role;
+        //             const otherParentEmail = email;
+
+        //             const actionText = existingTaskId ? 'modifiée' : 'ajoutée';
+        //             const subject = `Tâche ${actionText} par ${currentUserRole}: ${taskData.title}`;
+        //             let body = `Bonjour,\n\nLa tâche "${taskData.title}" a été ${actionText}.`;
+        //             body += `\nStatut: ${taskData.status}`;
+        //             if (taskData.description) {
+        //                 body += `\nDescription: ${taskData.description}`;
+        //             }
+        //             if (taskData.dueDate) {
+        //                 body += `\nÉchéance: ${taskData.dueDate}`;
+        //             }
+        //             if (taskData.assignedTo) {
+        //                 body += `\nAssignée à: ${taskData.assignedTo}`;
+        //             }
+        //             body += "\n\nCordialement,\nL'application Garde Alternée";
+
+        //             sendEmailNotification_SMTP(otherParentEmail, subject, body)
+        //                 .then(() => console.log("SMTP notification attempt logged after fetching user details for task event."))
+        //                 .catch(err => console.error("Error sending SMTP notification for task event:", err));
+        //         })
+        //         .catch(error => {
+        //             console.error("Erreur lors de la récupération des détails de l'utilisateur pour la notification (tâche):", error);
+        //             alert("Impossible de récupérer les informations nécessaires pour envoyer la notification. Veuillez vérifier la console.");
+        //         });
+        // }
+
     } catch (error) {
         console.error("Error saving task:", error);
         taskErrorElement.textContent = `Erreur d'enregistrement: ${error.message}`;

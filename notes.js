@@ -120,6 +120,25 @@ async function handleAddNoteSubmit(event) {
     try {
         await dbNotes.ref(`families/${currentFamilyNameNotes}/notes`).push(noteData);
         noteContentInput.value = ""; noteChildLinkSelect.value = "";
+
+        // Email notification prompt for new note
+        if (confirm("Voulez-vous envoyer une notification par e-mail à l'autre parent concernant cette note ?")) {
+            const currentUserRole = "Utilisateur Actuel"; // TODO: Implement getCurrentUserRole() in auth.js or similar
+            const otherParentEmail = "other.parent@example.com"; // TODO: Implement getOtherParentEmail() in auth.js or similar
+
+            const subject = `Nouvelle note ajoutée par ${currentUserRole}`;
+            let body = `Une nouvelle note a été ajoutée.\n\nContenu: "${noteData.content.substring(0, 100)}${noteData.content.length > 100 ? '...' : ''}"`;
+            if (noteData.childId) {
+                const childName = getChildNameById(noteData.childId);
+                body += `\n\nConcernant l'enfant: ${escapeHTML(childName)}`;
+            }
+            body += "\n\nCordialement,\nL'application Garde Alternée";
+
+            sendEmailNotification_placeholder(otherParentEmail, subject, body)
+                .then(() => console.log("Placeholder notification initiated for new note."))
+                .catch(err => console.error("Error sending placeholder notification for new note:", err));
+        }
+
     } catch (error) {
         console.error("Error saving note:", error);
         if(noteErrorElement) noteErrorElement.textContent = `Erreur d'enregistrement: ${error.message}`;
@@ -260,6 +279,28 @@ async function handleEditNoteSubmit(event) {
     try {
         await dbNotes.ref(`families/${currentFamilyNameNotes}/notes/${noteId}`).update(updatedNoteData);
         toggleEditNoteModal(false);
+
+        // // Email notification prompt for edited note
+        // if (confirm("Voulez-vous envoyer une notification par e-mail à l'autre parent concernant cette modification de note ?")) {
+        //     const currentUserRole = "Utilisateur Actuel"; // TODO: Implement getCurrentUserRole() in auth.js or similar
+        //     const otherParentEmail = "other.parent@example.com"; // TODO: Implement getOtherParentEmail() in auth.js or similar
+
+        //     const subject = `Note modifiée par ${currentUserRole}`;
+        //     let body = `Une note a été modifiée.\n\nNouveau contenu: "${updatedNoteData.content.substring(0, 100)}${updatedNoteData.content.length > 100 ? '...' : ''}"`;
+        //     if (updatedNoteData.childId) {
+        //         const childName = getChildNameById(updatedNoteData.childId);
+        //         body += `\n\nConcernant l'enfant: ${escapeHTML(childName)}`;
+        //     }
+        //     body += "\n\nCordialement,\nL'application Garde Alternée";
+
+        //     sendEmailNotification_SMTP(otherParentEmail, subject, body)
+        //         .then(() => console.log("SMTP notification attempt for new note logged."))
+        //         .catch(err => console.error("Error sending SMTP notification for new note:", err));
+        //     sendEmailNotification_SMTP(otherParentEmail, subject, body)
+        //         .then(() => console.log("SMTP notification attempt for edited note logged."))
+        //         .catch(err => console.error("Error sending SMTP notification for edited note:", err));
+        // }
+
     } catch (error) {
         console.error("Error updating note:", error);
         if(editNoteErrorElement) editNoteErrorElement.textContent = `Erreur de mise à jour: ${error.message}`;

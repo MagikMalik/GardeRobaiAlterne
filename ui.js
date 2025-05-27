@@ -55,4 +55,27 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log("UI fully loaded. Auth state check will determine view.");
     // Any general UI initializations that are not auth-dependent can go here.
     // For example, setting up theme, language, etc.
+
+    const statsModal = document.getElementById('statistics-modal');
+    const showStatsModalBtn = document.getElementById('show-stats-modal-btn');
+    const closeStatsModalBtn = document.getElementById('close-stats-modal-btn');
+
+    if (statsModal && showStatsModalBtn && closeStatsModalBtn) {
+        showStatsModalBtn.addEventListener('click', () => {
+            statsModal.classList.remove('hidden');
+        });
+
+        closeStatsModalBtn.addEventListener('click', () => {
+            statsModal.classList.add('hidden');
+        });
+
+        // Optional: Close modal if background is clicked
+        statsModal.addEventListener('click', (event) => {
+            if (event.target === statsModal) {
+                statsModal.classList.add('hidden');
+            }
+        });
+    } else {
+        console.warn("Statistics modal elements not found. Button or modal functionality might be affected.");
+    }
 });
