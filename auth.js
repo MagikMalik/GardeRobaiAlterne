@@ -132,10 +132,12 @@ function displayUserProfile() {
 
     const profileFamilyNameEl = document.getElementById('profile-family-name');
     const profileRoleEl = document.getElementById('profile-role');
+    const profileRoleElHeader = document.getElementById('profile-roleheader');
     const profileEmailEl = document.getElementById('profile-email');
 
     if (profileFamilyNameEl) profileFamilyNameEl.textContent = familyName || '-';
     if (profileRoleEl) profileRoleEl.textContent = userRole || '-';
+    if (profileRoleElHeader) profileRoleElHeader.textContent = userRole || '-';
     if (profileEmailEl) profileEmailEl.textContent = userEmail || '-';
     
     console.log("User profile displayed:", { familyName, userRole, userEmail });
