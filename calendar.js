@@ -92,7 +92,7 @@ function initCalendar(databaseService, familyNameFromAuth) {
         const dayCell = e.target.closest('div[data-date]');
         if (dayCell) {
             const date = dayCell.dataset.date;
-            const eventId = dayCell.dataset.eventId || dayCell.dataset.specialEventId;
+            const eventId = dayCell.dataset.eventId || dayCell.dataset.specialEventId || dayCell.dataset.jourFerieEventId;
             openEventModal(date, eventId);
         }
     });
@@ -105,6 +105,22 @@ function initCalendar(databaseService, familyNameFromAuth) {
         currentDateGlobal.setMonth(currentDateGlobal.getMonth() + 1);
         renderCalendar();
     });
+
+    // Add event listener for the new "Add New Event" button
+    const addNewEventButton = document.getElementById('add-new-event-btn');
+    if (addNewEventButton) {
+        addNewEventButton.addEventListener('click', () => {
+            // Option 2: Open with today's date pre-filled
+            const today = new Date();
+            const localYear = today.getFullYear();
+            const localMonth = (today.getMonth() + 1).toString().padStart(2, '0');
+            const localDay = today.getDate().toString().padStart(2, '0');
+            const todayDateString = `${localYear}-${localMonth}-${localDay}`;
+            openEventModal(todayDateString, null); // Passing today's date, and null for eventId
+        });
+    } else {
+        console.warn("Button with ID 'add-new-event-btn' not found. 'Add New Event' functionality will not be available.");
+    }
 
     if (currentFamilyName && db) {
         fetchFamilyUsers(currentFamilyName).then(() => {
@@ -670,9 +686,11 @@ function renderCalendar() {
             dayCell.classList.add('bg-blue-100', 'font-semibold', 'ring-1', 'ring-blue-400');
         }
         
+        // Clear previous indicators and event-specific dataset attributes
         delete dayCell.dataset.eventId; delete dayCell.dataset.eventType;
         delete dayCell.dataset.specialEventId; delete dayCell.dataset.specialEventType;
-        const existingIndicators = dayCell.querySelectorAll('.event-indicator-dot');
+        delete dayCell.dataset.jourFerieEventId; // Add this for jourFerie
+        const existingIndicators = dayCell.querySelectorAll('.event-indicator-dot, .jour-ferie-indicator-dot'); // Ensure we select all types
         existingIndicators.forEach(ind => ind.remove());
 
         let primaryEventStyled = false;
@@ -686,16 +704,34 @@ function renderCalendar() {
                         else if (event.type === "gardeMaman") dayCell.classList.add('bg-pink-300', 'hover:bg-pink-400');
                         else if (event.type === "vacancesPapa") dayCell.classList.add('bg-blue-500', 'text-white', 'hover:bg-blue-600');
                         else if (event.type === "vacancesMaman") dayCell.classList.add('bg-pink-500', 'text-white', 'hover:bg-pink-600');
-                        dayCell.dataset.eventId = eventId; dayCell.dataset.eventType = event.type;
+                        dayCell.dataset.eventId = eventId; // This is the primary clickable event for the cell
+                        dayCell.dataset.eventType = event.type;
                         primaryEventStyled = true;
                     }
                 } else if (event.type === "evenementSpecial") {
                     const indicatorDot = document.createElement('span');
+                    // Standardized class for all dots, color controlled by specific class
                     indicatorDot.className = 'event-indicator-dot absolute bottom-1 right-1 w-2 h-2 bg-yellow-500 rounded-full ring-1 ring-white';
                     indicatorDot.title = event.title || 'Événement spécial';
                     dayCell.appendChild(indicatorDot);
-                    if (!dayCell.dataset.specialEventId) {
-                        dayCell.dataset.specialEventId = eventId; dayCell.dataset.specialEventType = event.type;
+                    // Store the ID of the special event separately, if needed for clicking
+                    if (!dayCell.dataset.specialEventId) { // To handle click, perhaps store first one
+                       dayCell.dataset.specialEventId = eventId;
+                       dayCell.dataset.specialEventType = event.type;
+                    }
+                } else if (event.type === "jourFerie") { // ADD THIS BLOCK
+                    const jourFerieDot = document.createElement('span');
+                    // Use a different position or slightly different styling if coexisting with specialEventDot
+                    // For now, let's assume it can also be at bottom-1, but maybe left-1 if specialEventDot is right-1
+                    // Or, they could stack if display allows. For simplicity, let's try a different position if possible,
+                    // or just add another dot. If too many dots, UI might need rethink.
+                    // Let's use left side for jourFerie dot.
+                    jourFerieDot.className = 'jour-ferie-indicator-dot absolute bottom-1 left-1 w-2 h-2 bg-green-500 rounded-full ring-1 ring-white';
+                    jourFerieDot.title = event.title || 'Jour férié';
+                    dayCell.appendChild(jourFerieDot);
+                    // Store the ID of the jour ferie event, if needed for clicking
+                     if (!dayCell.dataset.jourFerieEventId) { // To handle click, perhaps store first one
+                       dayCell.dataset.jourFerieEventId = eventId;
                     }
                 }
             }
