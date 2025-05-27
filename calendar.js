@@ -92,7 +92,7 @@ function initCalendar(databaseService, familyNameFromAuth) {
         const dayCell = e.target.closest('div[data-date]');
         if (dayCell) {
             const date = dayCell.dataset.date;
-            const eventId = dayCell.dataset.eventId || dayCell.dataset.specialEventId;
+            const eventId = dayCell.dataset.eventId || dayCell.dataset.specialEventId || dayCell.dataset.jourFerieEventId;
             openEventModal(date, eventId);
         }
     });
@@ -106,10 +106,27 @@ function initCalendar(databaseService, familyNameFromAuth) {
         renderCalendar();
     });
 
+    // Add event listener for the new "Add New Event" button
+    const addNewEventButton = document.getElementById('add-new-event-btn');
+    if (addNewEventButton) {
+        addNewEventButton.addEventListener('click', () => {
+            // Option 2: Open with today's date pre-filled
+            const today = new Date();
+            const localYear = today.getFullYear();
+            const localMonth = (today.getMonth() + 1).toString().padStart(2, '0');
+            const localDay = today.getDate().toString().padStart(2, '0');
+            const todayDateString = `${localYear}-${localMonth}-${localDay}`;
+            openEventModal(todayDateString, null); // Passing today's date, and null for eventId
+        });
+    } else {
+        console.warn("Button with ID 'add-new-event-btn' not found. 'Add New Event' functionality will not be available.");
+    }
+
     if (currentFamilyName && db) {
         fetchFamilyUsers(currentFamilyName).then(() => {
-            initCustodyConfig(currentFamilyName, db); 
-            listenForCalendarEvents(currentFamilyName); // This will call renderCalendar and updateWeeklyRecap
+            initCustodyConfig(currentFamilyName, db); // Ensuring this is uncommented as per user's prior action
+            listenForCalendarEvents(currentFamilyName); // Ensuring this is active
+            // Manual calls to renderCalendar and updateWeeklyRecap are removed as listenForCalendarEvents handles it.
         });
     } else {
         renderCalendar(); // Render calendar even if no family data (empty state)
@@ -125,7 +142,11 @@ function getUserRole(uid, users) {
 }
 
 function updateWeeklyRecap(currentActualDate, events, users) {
-    const todayString = currentActualDate.toISOString().split('T')[0];
+    // Construct YYYY-MM-DD string from local date components for currentActualDate (today)
+    const localTodayYear = currentActualDate.getFullYear();
+    const localTodayMonth = (currentActualDate.getMonth() + 1).toString().padStart(2, '0');
+    const localTodayDay = currentActualDate.getDate().toString().padStart(2, '0');
+    const todayString = `${localTodayYear}-${localTodayMonth}-${localTodayDay}`;
     let currentGardeEventToday = null;
     let parentToday = "-";
     let parentWeek = "-"; // Using today's parent as proxy for week's parent
@@ -205,12 +226,30 @@ function updateWeeklyRecap(currentActualDate, events, users) {
         endOfWeek.setDate(startOfWeek.getDate() + 6); // Sunday
         endOfWeek.setHours(23,59,59,999);
 
-        const startOfWeekString = startOfWeek.toISOString().split('T')[0];
-        const endOfWeekString = endOfWeek.toISOString().split('T')[0];
+        // Construct YYYY-MM-DD string from local date components for startOfWeek
+        const localSOWYear = startOfWeek.getFullYear();
+        const localSOWMonth = (startOfWeek.getMonth() + 1).toString().padStart(2, '0');
+        const localSOWDay = startOfWeek.getDate().toString().padStart(2, '0');
+        const startOfWeekString = `${localSOWYear}-${localSOWMonth}-${localSOWDay}`;
+
+        // Construct YYYY-MM-DD string from local date components for endOfWeek
+        const localEOWYear = endOfWeek.getFullYear();
+        const localEOWMonth = (endOfWeek.getMonth() + 1).toString().padStart(2, '0');
+        const localEOWDay = endOfWeek.getDate().toString().padStart(2, '0');
+        const endOfWeekString = `${localEOWYear}-${localEOWMonth}-${localEOWDay}`;
+        
+        // ADD THIS LOG:
+        console.log(`[updateWeeklyRecap] Checking for events between ${startOfWeekString} and ${endOfWeekString}`);
+        console.log("[updateWeeklyRecap] All events being considered:", JSON.stringify(events));
+
+
         let eventsFoundThisWeek = false;
 
-        for (const eventId in events) {
+        for (const eventId in events) { // 'events' here is familyCalendarEvents
             const event = events[eventId];
+            // ADD THIS LOG (can be verbose, but useful for debugging):
+            // console.log(`[updateWeeklyRecap] Checking event: ${event.title || event.type} (${event.startDate} to ${event.endDate})`);
+
             // Check if event overlaps with the current week
             if (event.startDate <= endOfWeekString && event.endDate >= startOfWeekString) {
                  if (event.type === 'evenementSpecial' || event.type === 'jourFerie' || event.type.startsWith('vacances')) {
@@ -332,62 +371,92 @@ async function handleGenerateCustodyPlan(event) {
             const currentParentUidForEvent = currentParentIsFirst ? firstParentUid : secondParentUid;
             const eventType = (currentParentUidForEvent === memberUids.Papa) ? "gardePapa" : "gardeMaman";
             const newEventKey = db.ref(eventsRefPath).push().key;
+
+            // Format periodStart to YYYY-MM-DD using local components
+            const localPeriodStartYear = periodStart.getFullYear();
+            const localPeriodStartMonth = (periodStart.getMonth() + 1).toString().padStart(2, '0');
+            const localPeriodStartDay = periodStart.getDate().toString().padStart(2, '0');
+            const periodStartDateString = `${localPeriodStartYear}-${localPeriodStartMonth}-${localPeriodStartDay}`;
+
+            // Format periodEnd to YYYY-MM-DD using local components
+            const localPeriodEndYear = periodEnd.getFullYear();
+            const localPeriodEndMonth = (periodEnd.getMonth() + 1).toString().padStart(2, '0');
+            const localPeriodEndDay = periodEnd.getDate().toString().padStart(2, '0');
+            const periodEndDateString = `${localPeriodEndYear}-${localPeriodEndMonth}-${localPeriodEndDay}`;
+
             updates[`${eventsRefPath}/${newEventKey}`] = {
-                type: eventType, startDate: periodStart.toISOString().split('T')[0],
-                endDate: periodEnd.toISOString().split('T')[0], userId: currentParentUidForEvent,
+                type: eventType, 
+                startDate: periodStartDateString, // Use formatted local string
+                endDate: periodEndDateString,   // Use formatted local string
+                userId: currentParentUidForEvent,
                 title: (eventType === "gardePapa" ? "Garde Papa" : "Garde Maman"), description: "Généré automatiquement"
             };
             currentProcessingDate.setDate(periodStart.getDate() + 7);
             currentParentIsFirst = !currentParentIsFirst;
         }
     } else if (pattern === '2255') {
-        const cycle = [
-            { duration: 2, parentIndex: 0 }, { duration: 2, parentIndex: 1 }, { duration: 3, parentIndex: 0 }, // Week 1: P1(M,Tu), P2(W,Th), P1(F,Sa,Su)
-            { duration: 2, parentIndex: 1 }, { duration: 2, parentIndex: 0 }, { duration: 2, parentIndex: 1 }, { duration: 3, parentIndex: 1 } // Week 2: P2(M,Tu), P1(W,Th), P2(F,Sa,Su) -- this is a common interpretation for 2-2-5-5
-            // My previous code was P1(2) P2(2) P1(5) | P2(2) P1(2) P2(5). Let's use a more standard one if 2-2-5-5 means P1(2) P2(2) P1(3) etc.
-            // The prompt's 2-2-5-5 (Lun-Mar P1, Mer-Jeu P2, Ven-Dim P1 / Lun-Mar P2, Mer-Jeu P1, Ven-Dim P2) is:
-            // P1:2, P2:2, P1:3 (total 7 days for week 1)
-            // P2:2, P1:2, P2:3 (total 7 days for week 2)
-            // This is a 14-day cycle.
+        const parents = [firstParentUid, secondParentUid]; // parents[0] is starting parent (P1), parents[1] is other (P2)
+        
+        // New cycle: P1(2), P2(2), P1(5), P2(5)
+        const custodyCycle = [
+            { duration: 2, parent: parents[0] }, // P1 for 2 days
+            { duration: 2, parent: parents[1] }, // P2 for 2 days
+            { duration: 5, parent: parents[0] }, // P1 for 5 days
+            { duration: 5, parent: parents[1] }  // P2 for 5 days
         ];
-        // Corrected 2-2-5-5 cycle based on prompt's description
-        const parents = [firstParentUid, secondParentUid]; // parents[0] is starting parent, parents[1] is other
-        const week1Cycle = [
-            { duration: 2, parent: parents[0] }, // Mon-Tue P1
-            { duration: 2, parent: parents[1] }, // Wed-Thu P2
-            { duration: 3, parent: parents[0] }  // Fri-Sun P1
-        ];
-        const week2Cycle = [
-            { duration: 2, parent: parents[1] }, // Mon-Tue P2
-            { duration: 2, parent: parents[0] }, // Wed-Thu P1
-            { duration: 3, parent: parents[1] }  // Fri-Sun P2
-        ];
-        const full2WeekCycle = [...week1Cycle, ...week2Cycle];
-        let cycleDayIndex = 0; // Which day of the 14-day cycle are we on?
+        
+        let currentSegmentIndex = 0; // Index for iterating through the custodyCycle
 
         while (currentProcessingDate < endDateForGeneration) {
-            const segment = full2WeekCycle[cycleDayIndex % full2WeekCycle.length];
+            const segment = custodyCycle[currentSegmentIndex % custodyCycle.length];
+            
             const periodStart = new Date(currentProcessingDate);
-            const periodEnd = new Date(periodStart); periodEnd.setDate(periodStart.getDate() + segment.duration - 1);
+            const periodEnd = new Date(periodStart);
+            periodEnd.setDate(periodStart.getDate() + segment.duration - 1);
 
-            if (periodEnd >= endDateForGeneration) { // Do not generate past the requested duration
-                 periodEnd.setDate(endDateForGeneration.getDate() -1);
-                 if (periodStart > periodEnd) break; // Stop if start is already past the truncated end
+            // Ensure the event does not exceed the overall generation end date
+            if (periodEnd >= endDateForGeneration) {
+                // Adjust periodEnd to be the day before endDateForGeneration if it overshoots
+                // This means the last event might be shorter than its typical segment duration.
+                const tempEndDate = new Date(endDateForGeneration);
+                tempEndDate.setDate(endDateForGeneration.getDate() -1); // Make it inclusive of the last day
+                
+                // Only create event if periodStart is still valid
+                if (periodStart <= tempEndDate) {
+                     periodEnd.setTime(tempEndDate.getTime()); // Set periodEnd to the adjusted end date
+                } else {
+                    break; // Stop if the current periodStart is already past the generation end
+                }
             }
 
             const currentParentUidForEvent = segment.parent;
             const eventType = (currentParentUidForEvent === memberUids.Papa) ? "gardePapa" : "gardeMaman";
             const newEventKey = db.ref(eventsRefPath).push().key;
+            
+            // Format periodStart to YYYY-MM-DD using local components
+            const localPeriodStartYear = periodStart.getFullYear();
+            const localPeriodStartMonth = (periodStart.getMonth() + 1).toString().padStart(2, '0');
+            const localPeriodStartDay = periodStart.getDate().toString().padStart(2, '0');
+            const periodStartDateString = `${localPeriodStartYear}-${localPeriodStartMonth}-${localPeriodStartDay}`;
+
+            // Format periodEnd to YYYY-MM-DD using local components
+            const localPeriodEndYear = periodEnd.getFullYear();
+            const localPeriodEndMonth = (periodEnd.getMonth() + 1).toString().padStart(2, '0');
+            const localPeriodEndDay = periodEnd.getDate().toString().padStart(2, '0');
+            const periodEndDateString = `${localPeriodEndYear}-${localPeriodEndMonth}-${localPeriodEndDay}`;
+            
             updates[`${eventsRefPath}/${newEventKey}`] = {
-                type: eventType, startDate: periodStart.toISOString().split('T')[0],
-                endDate: periodEnd.toISOString().split('T')[0], userId: currentParentUidForEvent,
-                title: (eventType === "gardePapa" ? "Garde Papa" : "Garde Maman"), description: "Généré automatiquement (2255)"
+                type: eventType,
+                startDate: periodStartDateString, // Use formatted local string
+                endDate: periodEndDateString,   // Use formatted local string
+                userId: currentParentUidForEvent,
+                title: (eventType === "gardePapa" ? "Garde Papa" : "Garde Maman"),
+                description: "Généré automatiquement (2/2/5/5)" // Updated description
             };
+            
             currentProcessingDate.setDate(periodStart.getDate() + segment.duration);
-            cycleDayIndex++; // This should be cycleDayIndex += segment.duration to advance through the cycle's days correctly or rather cycleDayIndex++ for segment index
+            currentSegmentIndex++; 
         }
-
-
     } else if (pattern === 'custom') {
         custodyConfigMessageElement.textContent = "Info: Schéma 'Personnalisé', ajoutez événements manuellement.";
         custodyConfigMessageElement.className = 'text-blue-500 text-xs mt-1'; return;
@@ -512,16 +581,24 @@ async function handleEventFormSubmit(event) {
         title: titleValue, description: descriptionValue, userId: userIdValue || null 
     };
 
+    // ADD THIS LOG:
+    console.log("[handleEventFormSubmit] Event data being saved:", JSON.stringify(eventData));
+
     try {
         const eventsRef = db.ref(`families/${currentFamilyName}/calendarEvents`);
         if (existingEventId) {
             await eventsRef.child(existingEventId).update(eventData);
+            // ADD THIS LOG:
+            console.log("[handleEventFormSubmit] Event updated successfully. Event ID:", existingEventId);
         } else {
-            await eventsRef.push(eventData);
+            const newEventRef = await eventsRef.push(eventData);
+            // ADD THIS LOG:
+            console.log("[handleEventFormSubmit] Event pushed successfully. Event ID:", newEventRef.key);
         }
         toggleEventModal(false);
     } catch (error) {
-        console.error("Error saving event:", error);
+        // MODIFY THIS LOG:
+        console.error("[handleEventFormSubmit] Error saving event to Firebase:", error);
         eventErrorElement.textContent = `Erreur d'enregistrement: ${error.message}`;
     }
 }
@@ -547,10 +624,12 @@ function listenForCalendarEvents(familyName) {
     const eventsRef = db.ref(`families/${familyName}/calendarEvents`);
     eventsRef.on('value', snapshot => {
         familyCalendarEvents = snapshot.val() || {};
+        // ADD THIS LINE:
+        console.log("[listenForCalendarEvents] Events updated from Firebase:", JSON.stringify(familyCalendarEvents));
         renderCalendar(); 
         updateWeeklyRecap(new Date(), familyCalendarEvents, familyUsersData); // Update recap on event changes
     }, error => {
-        console.error("Error listening for calendar events:", error);
+        console.error("[listenForCalendarEvents] Error listening for calendar events:", error); // Enhanced log
         familyCalendarEvents = {}; 
         renderCalendar(); 
         updateWeeklyRecap(new Date(), {}, familyUsersData); // Update recap with empty events
@@ -585,23 +664,33 @@ function renderCalendar() {
     }
 
     const today = new Date();
-    const todayDateString = today.toISOString().split('T')[0];
+    // Construct YYYY-MM-DD string from local date components for today
+    const localTodayYear = today.getFullYear();
+    const localTodayMonth = (today.getMonth() + 1).toString().padStart(2, '0'); // getMonth() is 0-indexed
+    const localTodayDay = today.getDate().toString().padStart(2, '0');
+    const todayDateString = `${localTodayYear}-${localTodayMonth}-${localTodayDay}`;
 
     for (let day = 1; day <= numDaysInMonth; day++) {
         const dayCell = document.createElement('div');
         dayCell.className = 'border p-1 text-center cursor-pointer hover:bg-gray-200 h-10 flex items-center justify-center relative text-sm bg-white';
         dayCell.textContent = day;
         const cellDate = new Date(year, month, day);
-        const cellDateString = cellDate.toISOString().split('T')[0];
+        // Construct YYYY-MM-DD string from local date components to avoid timezone issues with toISOString()
+        const localYear = cellDate.getFullYear();
+        const localMonth = (cellDate.getMonth() + 1).toString().padStart(2, '0'); // getMonth() is 0-indexed
+        const localDay = cellDate.getDate().toString().padStart(2, '0');
+        const cellDateString = `${localYear}-${localMonth}-${localDay}`;
         dayCell.dataset.date = cellDateString;
 
         if (cellDateString === todayDateString) {
             dayCell.classList.add('bg-blue-100', 'font-semibold', 'ring-1', 'ring-blue-400');
         }
         
+        // Clear previous indicators and event-specific dataset attributes
         delete dayCell.dataset.eventId; delete dayCell.dataset.eventType;
         delete dayCell.dataset.specialEventId; delete dayCell.dataset.specialEventType;
-        const existingIndicators = dayCell.querySelectorAll('.event-indicator-dot');
+        delete dayCell.dataset.jourFerieEventId; // Add this for jourFerie
+        const existingIndicators = dayCell.querySelectorAll('.event-indicator-dot, .jour-ferie-indicator-dot'); // Ensure we select all types
         existingIndicators.forEach(ind => ind.remove());
 
         let primaryEventStyled = false;
@@ -615,16 +704,34 @@ function renderCalendar() {
                         else if (event.type === "gardeMaman") dayCell.classList.add('bg-pink-300', 'hover:bg-pink-400');
                         else if (event.type === "vacancesPapa") dayCell.classList.add('bg-blue-500', 'text-white', 'hover:bg-blue-600');
                         else if (event.type === "vacancesMaman") dayCell.classList.add('bg-pink-500', 'text-white', 'hover:bg-pink-600');
-                        dayCell.dataset.eventId = eventId; dayCell.dataset.eventType = event.type;
+                        dayCell.dataset.eventId = eventId; // This is the primary clickable event for the cell
+                        dayCell.dataset.eventType = event.type;
                         primaryEventStyled = true;
                     }
                 } else if (event.type === "evenementSpecial") {
                     const indicatorDot = document.createElement('span');
+                    // Standardized class for all dots, color controlled by specific class
                     indicatorDot.className = 'event-indicator-dot absolute bottom-1 right-1 w-2 h-2 bg-yellow-500 rounded-full ring-1 ring-white';
                     indicatorDot.title = event.title || 'Événement spécial';
                     dayCell.appendChild(indicatorDot);
-                    if (!dayCell.dataset.specialEventId) {
-                        dayCell.dataset.specialEventId = eventId; dayCell.dataset.specialEventType = event.type;
+                    // Store the ID of the special event separately, if needed for clicking
+                    if (!dayCell.dataset.specialEventId) { // To handle click, perhaps store first one
+                       dayCell.dataset.specialEventId = eventId;
+                       dayCell.dataset.specialEventType = event.type;
+                    }
+                } else if (event.type === "jourFerie") { // ADD THIS BLOCK
+                    const jourFerieDot = document.createElement('span');
+                    // Use a different position or slightly different styling if coexisting with specialEventDot
+                    // For now, let's assume it can also be at bottom-1, but maybe left-1 if specialEventDot is right-1
+                    // Or, they could stack if display allows. For simplicity, let's try a different position if possible,
+                    // or just add another dot. If too many dots, UI might need rethink.
+                    // Let's use left side for jourFerie dot.
+                    jourFerieDot.className = 'jour-ferie-indicator-dot absolute bottom-1 left-1 w-2 h-2 bg-green-500 rounded-full ring-1 ring-white';
+                    jourFerieDot.title = event.title || 'Jour férié';
+                    dayCell.appendChild(jourFerieDot);
+                    // Store the ID of the jour ferie event, if needed for clicking
+                     if (!dayCell.dataset.jourFerieEventId) { // To handle click, perhaps store first one
+                       dayCell.dataset.jourFerieEventId = eventId;
                     }
                 }
             }
